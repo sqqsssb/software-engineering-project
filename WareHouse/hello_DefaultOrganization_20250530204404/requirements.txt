@@ -1,0 +1,5 @@
+# This project uses Tkinter, which is included with Python's standard library.
+# No external dependencies are required for this project.
+
+# Optionally, specify the Python version required for this project
+python_version >=3.6
