@@ -84,7 +84,7 @@ class Phase(ABC):
         Returns:
 
         """
-        print("刚进chatting")
+
         if placeholders is None:
             placeholders = {}
         assert 1 <= chat_turn_limit <= 100
@@ -93,7 +93,7 @@ class Phase(ABC):
             raise ValueError(f"{assistant_role_name} not recruited in ChatEnv.")
         if not chat_env.exist_employee(user_role_name):
             raise ValueError(f"{user_role_name} not recruited in ChatEnv.")
-        print("init role play之前")
+
         # init role play
         role_play_session = RolePlaying(
             assistant_role_name=assistant_role_name,
@@ -107,14 +107,11 @@ class Phase(ABC):
             model_type=model_type,
             background_prompt=chat_env.config.background_prompt
         )
-        print("RolePlaying初始化结束")
         log_visualize("System", role_play_session.assistant_sys_msg)
         log_visualize("System", role_play_session.user_sys_msg)
 
-        print("进入role_play_session.init_chat")
         # start the chat
         _, input_user_msg = role_play_session.init_chat(None, placeholders, phase_prompt)
-        print("role_play_session.init_chat之后")
         seminar_conclusion = None
         # handle chats
         # the purpose of the chatting in one phase is to get a seminar conclusion
@@ -123,7 +120,7 @@ class Phase(ABC):
         # 1.1 get seminar conclusion flag (ChatAgent.info) from assistant or user role, which means there exist special "<INFO>" mark in the conversation
         # 1.2 add "<INFO>" to the reflected content of the chat (which may be terminated chat without "<INFO>" mark)
         # 2. without "<INFO>" mark, which means the chat is terminated or normally ended without generating a marked conclusion, and there is no need to reflect
-        print("开始循环for i in range(chat_turn_limit):")
+
         for i in range(chat_turn_limit):
             # start the chat, we represent the user and send msg to assistant
             # 1. so the input_user_msg should be assistant_role_prompt + phase_prompt
@@ -132,11 +129,12 @@ class Phase(ABC):
             # 4. then input_assistant_msg send to LLM and get user_response
             # all above are done in role_play_session.step, which contains two interactions with LLM
             # the first interaction is logged in role_play_session.init_chat
-            print(f"进入第{i}次role_play_session.step")
+
             assistant_response, user_response = role_play_session.step(input_user_msg, chat_turn_limit == 1)
-            print(f"第{i}次role_play_session.step之后")
+
             conversation_meta = "**" + assistant_role_name + "<->" + user_role_name + " on : " + str(
                 phase_name) + ", turn " + str(i) + "**\n\n"
+
             # TODO: max_tokens_exceeded errors here
             if isinstance(assistant_response.msg, ChatMessage):
                 # we log the second interaction here
@@ -182,6 +180,7 @@ class Phase(ABC):
 
         log_visualize("**[Seminar Conclusion]**:\n\n {}".format(seminar_conclusion))
         seminar_conclusion = seminar_conclusion.split("<INFO>")[-1]
+
         return seminar_conclusion
 
     def self_reflection(self,
@@ -293,7 +292,7 @@ class Phase(ABC):
 
         """
         self.update_phase_env(chat_env)
-        print("下一步执行chatting")
+
         self.seminar_conclusion = \
             self.chatting(chat_env=chat_env,
                           task_prompt=chat_env.env_dict['task_prompt'],
@@ -308,9 +307,16 @@ class Phase(ABC):
                           placeholders=self.phase_env,
                           memory=chat_env.memory,
                           model_type=self.model_type)
-        print("执行完chatting")
+        # TODO 阶段用户控制功能：
+        #  在 chatting 函数结束后，返回阶段结论，前端显示后，用户通过 API 发送下一步操作（继续或重新执行,重新执行可以添加prompt）。
+        #  后端需要保存当前阶段的状态，比如任务提示、角色设置等，以便重新执行时使用。
+        #  可能需要在会话中存储当前阶段的信息，或者在数据库中记录阶段状态。
+
+        # TODO 结论持久化：在 chatting 函数生成 seminar_conclusion 后，调用数据库操作函数，将结论和阶段信息存入 MySQL。
+        #  需要设计数据库表结构，包含阶段名称、结论内容、时间戳等字段。使用 SQLAlchemy 等 ORM 工具来处理数据库操作。
+
         chat_env = self.update_chat_env(chat_env)
-        print("更新chat_env")
+
         return chat_env
 
 

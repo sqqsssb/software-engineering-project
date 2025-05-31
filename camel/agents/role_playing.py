@@ -154,6 +154,8 @@ class RolePlaying:
                                                     **(assistant_agent_kwargs or {}), )
         self.user_agent: ChatAgent = ChatAgent(self.user_sys_msg,memory, model_type, **(user_agent_kwargs or {}), )
 
+        # TODO Critic Agent 控制
+        #  在 RolePlaying 类中初始化 critic agent，在__init__方法中根据 with_critic_in_the_loop 参数创建 CriticAgent 实例。
         if with_critic_in_the_loop:
             raise ValueError("with_critic_in_the_loop not available")
             # if critic_role_name.lower() == "human":
@@ -241,15 +243,16 @@ class RolePlaying:
             assistant_only: bool,
     ) -> Tuple[ChatAgentResponse, ChatAgentResponse]:
         assert isinstance(user_msg, ChatMessage), print("broken user_msg: " + str(user_msg))
-
+        # TODO
+        #  在每轮对话后，调用 critic agent 评估对话是否达到结束条件，比如检查结论是否符合标准，或者是否需要更多轮次。
         # print("assistant...")
-        print("进入role_play_session.step")
+
         user_msg_rst = user_msg.set_user_role_at_backend()
-        print("user_msg_rst之后")
+
         assistant_response = self.assistant_agent.step(user_msg_rst)
-        print("assistant_response之后")
+
         if assistant_response.terminated or assistant_response.msgs is None:
-            print("assistant_response.terminated or assistant_response.msgs is None")
+
             return (
                 ChatAgentResponse([assistant_response.msgs], assistant_response.terminated, assistant_response.info),
                 ChatAgentResponse([], False, {}))

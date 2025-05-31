@@ -219,9 +219,13 @@ class ChatAgent(BaseAgent):
                 the chat session has terminated, and information about the chat
                 session.
         """
-        print("进入assistant_agent.step")
+
+        # TODO 记忆检索：在 ChatAgent 的 step 方法中，处理输入消息前，先检索数据库中的相关记忆。
+        #  比如，根据阶段名称和角色名称，查询之前的结论或代码，将其作为上下文加入到消息中。
+        #  需要在 ChatAgent 中添加 memory 检索的逻辑，可能在 update_messages 或 step 方法中调用检索函数，并将结果添加到消息列表中。
+
         messages = self.update_messages(input_message)
-        print("update_messages之后")
+
         if self.message_window_size is not None and len(
                 messages) > self.message_window_size:
             messages = [self.system_message
@@ -239,12 +243,11 @@ class ChatAgent(BaseAgent):
 
         if num_tokens < self.model_token_limit:
             response = self.model_backend.run(messages=openai_messages)
-            print(response)
+
             if openai_new_api:
                 if not isinstance(response, ChatCompletion):
                     raise RuntimeError("OpenAI returned unexpected struct")
-                print(f"response.choices:{response.choices}")
-                print(f"response.choices大小：{len(response.choices)}")
+
                 # 移除每个 choice.message 中的 'annotations' 键值对
                 for choice in response.choices:
                     message_dict = dict(choice.message)
@@ -256,27 +259,11 @@ class ChatAgent(BaseAgent):
                                 meta_dict=dict(), **dict(choice.message))
                     for choice in response.choices
                 ]
-                print(f"output_messages:{output_messages}")
+
                 info = self.get_info(
                     response.id,
                     response.usage,
                     [str(choice.finish_reason) for choice in response.choices],
-                    num_tokens,
-                )
-                print(f"info:{info}")
-            else:
-                print("else1")
-                if not isinstance(response, dict):
-                    raise RuntimeError("OpenAI returned unexpected struct")
-                output_messages = [
-                    ChatMessage(role_name=self.role_name, role_type=self.role_type,
-                                meta_dict=dict(), **dict(choice["message"]))
-                    for choice in response["choices"]
-                ]
-                info = self.get_info(
-                    response["id"],
-                    response["usage"],
-                    [str(choice["finish_reason"]) for choice in response["choices"]],
                     num_tokens,
                 )
 
@@ -285,7 +272,6 @@ class ChatAgent(BaseAgent):
             if output_messages[0].content.split("\n")[-1].startswith("<INFO>"):
                 self.info = True
         else:
-            print("else2")
             self.terminated = True
             output_messages = []
 
@@ -295,7 +281,7 @@ class ChatAgent(BaseAgent):
                 ["max_tokens_exceeded_by_camel"],
                 num_tokens,
             )
-        print("诶诶诶诶诶诶诶诶结束了")
+
         return ChatAgentResponse(output_messages, self.terminated, info)
 
     def __repr__(self) -> str:
