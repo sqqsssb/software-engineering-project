@@ -66,15 +66,13 @@ class BaseMessage:
         Returns:
             Any: The attribute value.
         """
-        print("调用__getattribute__")
+
         delegate_methods = [
             method for method in dir(str) if not method.startswith('_')
         ]
         if name in delegate_methods:
-            print("name in delegate_methods")
             content = super().__getattribute__('content')
             if isinstance(content, str):
-                print("isinstance(content, str)")
                 content_method = getattr(content, name, None)
                 if callable(content_method):
 
@@ -87,7 +85,6 @@ class BaseMessage:
                         Returns:
                             Any: The modified argument value.
                         """
-                        print("调用modify_arg")
                         if isinstance(arg, BaseMessage):
                             return arg.content
                         elif isinstance(arg, (list, tuple)):
@@ -105,7 +102,6 @@ class BaseMessage:
                         Returns:
                             Any: The result of the delegate method.
                         """
-                        print("调用wrapper")
                         modified_args = [modify_arg(arg) for arg in args]
                         modified_kwargs = {
                             k: modify_arg(v)
@@ -117,7 +113,6 @@ class BaseMessage:
                             output, str) else output
 
                     return wrapper
-        print("__getattribute__返回")
         return super().__getattribute__(name)
 
     def _create_new_instance(self, content: str) -> "BaseMessage":
@@ -130,7 +125,6 @@ class BaseMessage:
         Returns:
             BaseMessage: The new instance of :obj:`BaseMessage`.
         """
-        print("_create_new_instance")
         return self.__class__(role_name=self.role_name,
                               role_type=self.role_type,
                               meta_dict=self.meta_dict, role=self.role,
@@ -145,7 +139,6 @@ class BaseMessage:
         Returns:
             Union[BaseMessage, Any]: The result of the addition.
         """
-        print("__add__")
         if isinstance(other, BaseMessage):
             combined_content = self.content.__add__(other.content)
         elif isinstance(other, str):
@@ -165,7 +158,6 @@ class BaseMessage:
         Returns:
             Union[BaseMessage, Any]: The result of the multiplication.
         """
-        print("__mul__")
         if isinstance(other, int):
             multiplied_content = self.content.__mul__(other)
             return self._create_new_instance(multiplied_content)
@@ -180,7 +172,6 @@ class BaseMessage:
         Returns:
             int: The length of the content.
         """
-        print("__len__")
         return len(self.content)
 
     def __contains__(self, item: str) -> bool:

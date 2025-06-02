@@ -11,7 +11,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # =========== Copyright 2023 @ CAMEL-AI.org. All Rights Reserved. ===========
-from typing import Any, Dict, Optional, Union
+from typing import Any, Dict, Optional, Union, List
 
 from camel.agents import ChatAgent
 from camel.configs import ChatGPTConfig
@@ -138,7 +138,7 @@ class TaskPlannerAgent(ChatAgent):
             role_type=RoleType.ASSISTANT,
             content="You are a helpful task planner.",
         )
-        super().__init__(system_message, model, model_config)
+        super().__init__(system_message=system_message, model=model, model_config=model_config)
 
     def step(
         self,
@@ -161,7 +161,6 @@ class TaskPlannerAgent(ChatAgent):
         task_msg = UserChatMessage(role_name="Task Planner",
                                    content=self.task_planner_prompt)
         # sub_tasks_msgs, terminated, _
-        print("tasktesponse调用咯诶诶诶诶诶诶诶诶1111")
         task_tesponse = super().step(task_msg)
 
         if task_tesponse.msgs is None:
@@ -171,3 +170,15 @@ class TaskPlannerAgent(ChatAgent):
 
         sub_tasks_msg = task_tesponse.msgs[0]
         return TextPrompt(sub_tasks_msg.content)
+
+    def retrieve_memory(self, input_message: str) -> List[str]:
+        """
+        为了整个程序运行速度更快，TaskPlannerAgent的retrieve_memory跳过
+        Args:
+            input_message:
+
+        Returns:
+
+        """
+        relevant_memory = [""]
+        return relevant_memory

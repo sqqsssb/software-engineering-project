@@ -1,3 +1,0 @@
-
-For example, if you later decide to include a package like `numpy`, you could add:
-

@@ -91,6 +91,7 @@ class RolePlaying:
             extend_sys_msg_meta_dicts: Optional[List[Dict]] = None,
             extend_task_specify_meta_dict: Optional[Dict] = None,
             background_prompt: Optional[str] = "",
+            phase_name: str = "",  # 新增：当前阶段名称
             memory = None,
     ) -> None:
         self.with_task_specify = with_task_specify
@@ -99,6 +100,8 @@ class RolePlaying:
         self.model_type = model_type
         self.task_type = task_type
         self.memory = memory
+        self.phase_name = phase_name
+        print(f"进入RolePlaying初始化函数后的phase_name：{self.phase_name}")
 
         if with_task_specify:
             task_specify_meta_dict = dict()
@@ -149,10 +152,11 @@ class RolePlaying:
         self.user_sys_msg = SystemMessage(role_name=user_role_name, role_type=RoleType.DEFAULT,
                                           meta_dict=sys_msg_meta_dicts[1],
                                           content=user_role_prompt.format(**sys_msg_meta_dicts[1]))
-
-        self.assistant_agent: ChatAgent = ChatAgent(self.assistant_sys_msg, memory, model_type,
+        print(f"ChatAgent初始化时的phase_name：{self.phase_name}")
+        self.assistant_agent: ChatAgent = ChatAgent(self.assistant_sys_msg, memory, model_type, phase_name = self.phase_name,
                                                     **(assistant_agent_kwargs or {}), )
-        self.user_agent: ChatAgent = ChatAgent(self.user_sys_msg,memory, model_type, **(user_agent_kwargs or {}), )
+        self.user_agent: ChatAgent = ChatAgent(self.user_sys_msg,memory, model_type, phase_name = self.phase_name,
+                                               **(user_agent_kwargs or {}), )
 
         # TODO Critic Agent 控制
         #  在 RolePlaying 类中初始化 critic agent，在__init__方法中根据 with_critic_in_the_loop 参数创建 CriticAgent 实例。
@@ -230,7 +234,6 @@ class RolePlaying:
             raise ValueError("Got than one message to process. "
                              f"Num of messages: {len(messages)}.")
         elif self.with_critic_in_the_loop and self.critic is not None:
-            print("processmessages调用咯诶诶诶诶诶诶诶诶1111")
             processed_msg = self.critic.step(messages)
         else:
             processed_msg = messages[0]

@@ -63,25 +63,20 @@ class OpenAIModel(ModelBackend):
         self.model_config_dict = model_config_dict
 
     def run(self, *args, **kwargs):
-        print("进入run")
         string = "\n".join([message["content"] for message in kwargs["messages"]])
         encoding = tiktoken.encoding_for_model(self.model_type.value)
         num_prompt_tokens = len(encoding.encode(string))
         gap_between_send_receive = 15 * len(kwargs["messages"])
         num_prompt_tokens += gap_between_send_receive
-        print("run中的if之前")
-        print("openai_new_api")
+
         if openai_new_api:
-            print("进入openai_new_api")
             # Experimental, add base_url
             if BASE_URL:
-                print("baseurl的判断")
                 client = openai.OpenAI(
                     api_key='sk-k1YBV1y0x43Be85HGiWy5xuUhwSRZYJtjvUGJP3Xu1SEpeik',
                     base_url='https://api.openai-proxy.live/v1',
                 )
             else:
-                print("进else")
                 client = openai.OpenAI(
                     api_key='sk-k1YBV1y0x43Be85HGiWy5xuUhwSRZYJtjvUGJP3Xu1SEpeik'
                 )
@@ -195,9 +190,7 @@ class ModelFactory:
             ModelType.GPT_4O_MINI,
             None
         }:
-            print("OpenAIModel之前")
             model_class = OpenAIModel
-            print("OpenAIModel之后")
         elif model_type == ModelType.STUB:
             model_class = StubModel
         else:

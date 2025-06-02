@@ -1,6 +1,11 @@
+import json
 import os
 import re
 from abc import ABC, abstractmethod
+from typing import List
+
+import mysql
+from mysql.connector import Error
 
 from camel.agents import RolePlaying
 from camel.messages import ChatMessage
@@ -8,6 +13,9 @@ from camel.typing import TaskType, ModelType
 from chatdev.chat_env import ChatEnv
 from chatdev.statistics import get_info
 from chatdev.utils import log_visualize, log_arguments
+from ecl import memory
+from ecl.db_config import create_connection, close_connection
+from ecl.memory import MemoryBase
 
 
 class Phase(ABC):
@@ -35,6 +43,7 @@ class Phase(ABC):
         self.phase_prompt = phase_prompt
         self.phase_env = dict()
         self.phase_name = phase_name
+        print(f"Phase初始化时的self.phase_name:{self.phase_name}")
         self.assistant_role_prompt = role_prompts[assistant_role_name]
         self.user_role_prompt = role_prompts[user_role_name]
         self.ceo_prompt = role_prompts["Chief Executive Officer"]
@@ -94,6 +103,7 @@ class Phase(ABC):
         if not chat_env.exist_employee(user_role_name):
             raise ValueError(f"{user_role_name} not recruited in ChatEnv.")
 
+        print(f"RolePlaying初始化时的phase_name：{phase_name}")
         # init role play
         role_play_session = RolePlaying(
             assistant_role_name=assistant_role_name,
@@ -105,7 +115,8 @@ class Phase(ABC):
             with_task_specify=with_task_specify,
             memory=memory,
             model_type=model_type,
-            background_prompt=chat_env.config.background_prompt
+            background_prompt=chat_env.config.background_prompt,
+            phase_name = phase_name,
         )
         log_visualize("System", role_play_session.assistant_sys_msg)
         log_visualize("System", role_play_session.user_sys_msg)
@@ -292,7 +303,7 @@ class Phase(ABC):
 
         """
         self.update_phase_env(chat_env)
-
+        print(f"chatting初始化时的phase_name：{self.phase_name}")
         self.seminar_conclusion = \
             self.chatting(chat_env=chat_env,
                           task_prompt=chat_env.env_dict['task_prompt'],
@@ -312,13 +323,107 @@ class Phase(ABC):
         #  后端需要保存当前阶段的状态，比如任务提示、角色设置等，以便重新执行时使用。
         #  可能需要在会话中存储当前阶段的信息，或者在数据库中记录阶段状态。
 
+        chat_env = self.update_chat_env(chat_env)
+
         # TODO 结论持久化：在 chatting 函数生成 seminar_conclusion 后，调用数据库操作函数，将结论和阶段信息存入 MySQL。
         #  需要设计数据库表结构，包含阶段名称、结论内容、时间戳等字段。使用 SQLAlchemy 等 ORM 工具来处理数据库操作。
-
-        chat_env = self.update_chat_env(chat_env)
+        # 存储到数据库
+        # 生成 seminar_conclusion 后，调用 save_phase_conclusion
+        connection = create_connection()  # 之前定义的创建连接函数
+        if connection:
+            # 假设 self.memory 是 Memory 类实例，获取 AllMemory 实例
+            chat_env.memory.upload()
+            all_memory = chat_env.memory.memory_data.get("All")
+            # if all_memory:
+            # TODO 根据phase判断是text还是code
+            # if self.phase_name in ["Programming", ...]
+            # content_type="code"
+            # else : content_type="text"
+            self.save_phase_conclusion(
+                connection=connection,
+                content=self.seminar_conclusion,
+                content_type="text",  # 可根据实际内容类型调整，比如是代码就传 "code"
+                memory=all_memory,
+            )
+            print(f"调用save_phase_conclusion函数，phase_name：{self.phase_name}，role：{self.user_role_name}<->{self.assistant_role_name}，content：{self.seminar_conclusion}")
+            close_connection(connection)  # 关闭数据库连接
 
         return chat_env
 
+    def save_phase_conclusion(self,
+                              connection: mysql.connector.connection.MySQLConnection,
+                              content: str,
+                              content_type: str,
+                              memory: MemoryBase,  # 传入 MemoryBase 实例，利用其嵌入能力
+                              phase_id: int = None
+    ) -> None:
+        """
+                存储阶段结论到 conclusion 表，关联 phase 表，利用 Memory 模块生成嵌入向量
+                :param connection: MySQL 数据库连接对象
+                :param content: 结论内容（支持代码段）
+                :param content_type: 内容类型，如 'text'/'code'
+                :param memory: MemoryBase 子类实例，用于生成嵌入向量
+                :param phase_id: 阶段 ID
+                """
+        # 先处理 phase 表相关，确保有对应的 phase 记录
+        phase_cursor = connection.cursor()
+        if phase_id is None:
+            # 查询 phase 表是否已有该阶段名称的记录
+            query_phase_sql = "SELECT phase_id FROM phase WHERE phase_name = %s"
+            phase_cursor.execute(query_phase_sql, (self.phase_name,))
+            result = phase_cursor.fetchone()
+            if result:
+                phase_id = result[0]
+            else:
+                # 插入新的 phase 记录
+                insert_phase_sql = """
+                            INSERT INTO phase (phase_name, phase_prompt) 
+                            VALUES (%s, %s)
+                        """
+                phase_prompt = self.phase_prompt
+                # 执行插入，数据库会自动为 phase_id 分配自增值
+                phase_cursor.execute(insert_phase_sql, (self.phase_name, phase_prompt))
+                connection.commit()
+                phase_id = phase_cursor.lastrowid
+        phase_cursor.close()
+
+        # 生成嵌入向量，利用 Memory 模块里的 OpenAIEmbedding 能力
+        embedding: List[float] = []
+        if content_type == "text":
+            embedding = memory.embedding_method.get_text_embedding(content)
+        elif content_type == "code":
+            embedding = memory.embedding_method.get_code_embedding(content)
+
+        # 存储到 conclusion 表
+        sql = """
+                INSERT INTO conclusion (phase_id, role, content, content_type, embedding)
+                VALUES (%s, %s, %s, %s, %s)
+                """
+        # embedding_json = json.dumps(embedding)
+        # 改进：使用 MySQL 的 JSON_ARRAY 函数处理数组
+        # 将 embedding 转换为 MySQL 可识别的 JSON 数组格式
+        embedding_json_array = f"[{', '.join(map(str, embedding))}]"
+        cursor = connection.cursor()
+        try:
+            # 使用 JSON_ARRAY_PACK 函数确保正确存储为 JSON 数组
+            cursor.execute(sql,
+                           (phase_id,
+                            f"{self.user_role_name}<->{self.assistant_role_name}",
+                            content,
+                            content_type,
+                            embedding_json_array # 传递格式化后的 JSON 数组字符串
+                            ))
+            connection.commit()
+            print(f"成功存储结论，ID: {cursor.lastrowid}")
+        except Error as e:
+            connection.rollback()
+            print(f"存储失败: {e}")
+            # 打印详细的错误信息，帮助调试
+            print(f"SQL: {sql}")
+            print(
+                f"参数: {phase_id}, {self.user_role_name}<->{self.assistant_role_name}, {content_type}, {embedding_json_array[:50]}...")
+        finally:
+            cursor.close()
 
 class DemandAnalysis(Phase):
     def __init__(self, **kwargs):
@@ -548,7 +653,6 @@ class CodeReviewHuman(Phase):
                           model_type=self.model_type)
         chat_env = self.update_chat_env(chat_env)
         return chat_env
-
 
 class TestErrorSummary(Phase):
     def __init__(self, **kwargs):

@@ -11,9 +11,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # =========== Copyright 2023 @ CAMEL-AI.org. All Rights Reserved. ===========
+import json
 from dataclasses import dataclass
 from typing import Any, Dict, List, Optional
 
+import numpy as np
+from mysql.connector import Error
 from tenacity import retry
 from tenacity.stop import stop_after_attempt
 from tenacity.wait import wait_exponential
@@ -29,6 +32,9 @@ from camel.utils import (
     openai_api_key_required,
 )
 from chatdev.utils import log_visualize
+from ecl.db_config import create_connection, close_connection
+from ecl.embedding import OpenAIEmbedding
+
 try:
     from openai.types.chat import ChatCompletion
 
@@ -91,6 +97,9 @@ class ChatAgent(BaseAgent):
             model: Optional[ModelType] = None,
             model_config: Optional[Any] = None,
             message_window_size: Optional[int] = None,
+            phase_name: str = "",  # 新增：当前阶段名称（用于过滤记忆）
+            top_k: int = 5,  # 最多返回5条相似记忆
+            similarity_threshold: float = 0.75  # 相似度阈值
     ) -> None:
 
         self.system_message: SystemMessage = system_message
@@ -103,6 +112,11 @@ class ChatAgent(BaseAgent):
         self.model_backend: ModelBackend = ModelFactory.create(self.model, self.model_config.__dict__)
         self.terminated: bool = False
         self.info: bool = False
+        self.phase_name = phase_name
+        print(f"进入ChatAgent初始化函数后的phase_name：{self.phase_name}")
+        self.top_k = top_k
+        self.similarity_threshold = similarity_threshold
+        self.embedding_method = OpenAIEmbedding()  # 向量生成器
         self.init_messages()
         if memory !=None and self.role_name in["Code Reviewer","Programmer","Software Test Engineer"]:
             self.memory = memory.memory_data.get("All")
@@ -201,6 +215,56 @@ class ChatAgent(BaseAgent):
 
         return target_memory
 
+    def retrieve_memory(self, input_message: str) -> List[str]:
+        """从数据库检索与输入消息相似的记忆"""
+        # 1. 生成输入消息的向量
+        input_embedding = self.embedding_method.get_text_embedding(input_message)
+
+        print(f"输入向量维度: {len(input_embedding)}")
+        print(f"输入向量示例: {input_embedding[:5]}...")
+
+        # 2. 查询数据库：使用余弦相似度匹配（示例SQL，需根据实际表结构调整）
+        connection = create_connection()  # 复用之前的数据库连接函数
+        relevant_memory = []
+        if connection:
+            try:
+                cursor = connection.cursor()
+                # 简化 SQL，先捞取合法数据，再在 Python 侧计算相似度
+                sql = """
+                                SELECT conclusion_id, content, embedding
+                                FROM conclusion
+                                WHERE JSON_VALID(embedding) = 1
+                                ORDER BY conclusion_id DESC  -- 按主键倒序，最新记录在前
+                                LIMIT %s
+                                """
+                cursor.execute(sql, (self.top_k,))
+                results = cursor.fetchall()
+
+                input_vec = np.array(input_embedding, dtype=np.float32)
+                for row in results:
+                    conclusion_id, content, embedding_json = row
+                    try:
+                        embedding = np.array(json.loads(embedding_json), dtype=np.float32)
+                        if embedding.shape != input_vec.shape:
+                            continue
+                        # 余弦相似度公式
+                        similarity = np.dot(embedding, input_vec) / (
+                                    np.linalg.norm(embedding) * np.linalg.norm(input_vec))
+                        if similarity >= self.similarity_threshold:
+                            relevant_memory.append(content)
+                            print(f"在{self.phase_name}阶段，第{conclusion_id}条记录数据库查询相似度：{similarity}，大于等于阈值{self.similarity_threshold}")
+                        else:
+                            print(f"在{self.phase_name}阶段，第{conclusion_id}条记录数据库查询相似度：{similarity}，小于阈值{self.similarity_threshold}")
+                    except (json.JSONDecodeError, ValueError) as e:
+                        print(f"解析/计算异常: {e}，跳过该条记录")
+
+            except Error as e:
+                print(f"记忆检索失败: {e}")
+            finally:
+                close_connection(connection)
+        print(f"最终返回 {len(relevant_memory)} 条相关记忆")
+        return relevant_memory
+
     # @retry(wait=wait_exponential(min=5, max=60), stop=stop_after_attempt(5))
     # @openai_api_key_required
     def step(
@@ -223,14 +287,40 @@ class ChatAgent(BaseAgent):
         # TODO 记忆检索：在 ChatAgent 的 step 方法中，处理输入消息前，先检索数据库中的相关记忆。
         #  比如，根据阶段名称和角色名称，查询之前的结论或代码，将其作为上下文加入到消息中。
         #  需要在 ChatAgent 中添加 memory 检索的逻辑，可能在 update_messages 或 step 方法中调用检索函数，并将结果添加到消息列表中。
+        # 检索记忆数据库
+        # memory_entries = search_memory(
+        #     role_name=self.role_name,
+        #     phase_name=current_phase_name  # 需从上下文中获取阶段名
+        # )
+        # # 将记忆添加到消息历史
+        # for entry in memory_entries:
+        #     self.update_messages(ChatMessage(content=entry.content))
 
+        # 1. 检索相关记忆
+        relevant_memory = self.retrieve_memory(input_message.content)
+
+        # 2. 将记忆添加到对话历史（作为system prompt或user message）
+        for memory_content in relevant_memory:
+            # 示例：以System Message形式注入上下文
+            memory_msg = ChatMessage(
+                role_name="System",
+                role="system",
+                content=f"历史记忆：{memory_content}",
+                meta_dict=dict(), role_type = None,
+            )
+            self.update_messages(memory_msg)
+        print(f"ChatAgent的step函数中，relevant_memory = {relevant_memory}")
+
+        # 3. 原有消息处理逻辑
         messages = self.update_messages(input_message)
+        print(f"ChatAgent的step函数中，messages = (relevant_memory + input_message):{messages}")
 
         if self.message_window_size is not None and len(
                 messages) > self.message_window_size:
             messages = [self.system_message
                         ] + messages[-self.message_window_size:]
         openai_messages = [message.to_openai_message() for message in messages]
+        print(f"ChatAgent的step函数中，openai_messages = (relevant_memory + input_message).to_openai_message():{openai_messages}")
         num_tokens = num_tokens_from_messages(openai_messages, self.model)
 
         # for openai_message in openai_messages:

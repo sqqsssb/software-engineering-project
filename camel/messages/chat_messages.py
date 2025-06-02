@@ -42,7 +42,7 @@ class ChatMessage(BaseMessage):
         audio (object): The audio contains data about the audio response from the model.
     """
     role_name: str
-    role_type: RoleType
+    role_type: Optional[RoleType]
     meta_dict: Optional[Dict[str, str]]
     role: str
     content: str = ""
@@ -53,7 +53,6 @@ class ChatMessage(BaseMessage):
         tool_calls: Optional[ChatCompletionMessageToolCall] = None
 
     def set_user_role_at_backend(self: BaseMessage):
-        print("调用set_user_role_at_backend")
         return self.__class__(
             role_name=self.role_name,
             role_type=self.role_type,

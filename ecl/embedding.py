@@ -12,7 +12,7 @@ from tenacity import (
     wait_random_exponential,
     wait_fixed
 )
-from utils import log_and_print_online
+from ecl.utils import log_and_print_online
 sys.path.append(os.path.join(os.getcwd(),"ecl"))
 
 class OpenAIEmbedding:
