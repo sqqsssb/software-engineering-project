@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ChatDev 可视化界面</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>ChatDev 可视化界面</h1>
+        </header>
+        
+        <main>
+            <div class="chat-container">
+                <div id="messages" class="messages"></div>
+                <div class="input-container">
+                    <textarea id="prompt" placeholder="输入您的提示..."></textarea>
+                    <button id="send">发送</button>
+                </div>
+            </div>
+            
+            <div class="control-panel">
+                <h2>阶段控制</h2>
+                <div class="phase-info">
+                    <h3>当前阶段状态</h3>
+                    <div id="phase-state"></div>
+                </div>
+                <div class="phase-controls">
+                    <button id="continue-phase">继续执行</button>
+                    <button id="restart-phase">重新执行</button>
+                    <div class="restart-prompt" style="display: none;">
+                        <textarea id="restart-prompt-input" placeholder="输入新的提示（可选）..."></textarea>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+</html> 
