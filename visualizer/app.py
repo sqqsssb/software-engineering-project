@@ -1,6 +1,8 @@
 import logging
 import subprocess
 import threading
+import sys
+from pathlib import Path
 
 import requests
 import os
@@ -61,23 +63,48 @@ def run_prompt():
     with run_lock:  # 加锁，确保同一时间只有一个请求执行
         global request_count
         request_count += 1
-        print(f"收到第 {request_count} 次请求，Prompt: {request.form.get('prompt')}")
+        print(f"收到第 {request_count} 次请求，Prompt: {request.form.get('prompt')}, Name: {request.form.get('name')}, Model: {request.form.get('model')}, Path: {request.form.get('path')}, Config: {request.form.get('config')}, Org: {request.form.get('org')}")
         print(f"客户端 IP: {request.remote_addr}")
         try:
             prompt = request.form.get("prompt")
+            name = request.form.get("name")  # 新增：获取 name 参数
+            model = request.form.get("model")  # 新增：获取 model 参数
+            path = request.form.get("path")    # 新增：获取 path 参数
+            config = request.form.get("config") 
+            org = request.form.get("org") 
+
             if not prompt:
                 return jsonify({"status": "error", "message": "Prompt is required"}), 400
+            
+            if not name:  # 新增：校验 name
+                return jsonify({"status": "error", "message": "Name is required"}), 400
+            
+            if not model:
+                return jsonify({"status": "error", "message": "Model is required"}), 400
 
             # 直接调用虚拟环境的 Python 解释器
-            python_path = "D:/Anaconda3/envs/ChatDev_conda_env/python.exe"  # Windows 路径
+            # python_path = "D:/Anaconda3/envs/ChatDev_conda_env/python.exe"  # Windows 路径
+            # python_path="D:/tools/Anaconda/envs/ChatDev_conda_env/python.exe"
+            python_path=sys.executable
+            print(f"python_path:{python_path}")
+            project_root = Path(__file__).parent.parent
+            print(f"project_root:{project_root}")
 
             result = subprocess.run(
-                [python_path, "run.py", "--task", prompt],  # 直接用虚拟环境的 Python 执行
+                [python_path, "run.py", 
+                 "--task", prompt,
+                 "--name", name,
+                 "--model", model,  # 新增：传递 model 参数
+                 "--path", path,
+                 "--config", config,  # 新增：传递 config 参数
+                 "--org", org],       # 新增：传递 org 参数],   # 新增：传递 path 参数
                 capture_output=True,
                 text=True,
                 encoding='utf-8',  # 强制用 utf-8 解码，替代系统默认编码
                 timeout=300,
-                cwd="D:/ChatDev-main/ChatDev-main"  # run.py 所在目录
+                # cwd="D:/ChatDev-main/ChatDev-main"  # run.py 所在目录
+                # cwd="D:/projects/software-engineering-project-main"
+                cwd = project_root
             )
 
             # 重点：打印 run.py 的输出和错误

@@ -142,11 +142,16 @@ $(document).ready(function () {
         button.prop("disabled", true).text("Running...");  // 禁用并修改文本
         // 1. 获取用户输入的 Prompt
         const userPrompt = $("#user-prompt").val().trim();
+        const userName = $("#user-name").val().trim();  // 新增：获取 name 输入框的值
+        const userModel = $("#user-model").val().trim();  // 新增：获取 model 输入框的值
+        const userPath = $("#user-path").val().trim();    // 新增：获取 path 输入框的值
+        const userConfig = $("#user-config").val().trim();  // 新增：获取 config 输入框的值
+        const userOrg = $("#user-org").val().trim();        // 新增：获取 org 输入框的值
 
         // 校验输入是否为空
         if (!userPrompt) {
             console.log("触发校验的调用栈:", new Error().stack); // 打印调用栈
-            alert("请输入项目需求（Prompt）！");
+            alert("请填写所有必填字段！");
             return; // 终止后续操作
         }
 
@@ -154,7 +159,14 @@ $(document).ready(function () {
         $(this).text("执行中...").prop("disabled", true); // 禁用按钮并修改文本
 
         // 3. 发送 AJAX 请求到后端接口（假设接口为 /run_prompt）
-        $.post("/run_prompt", { prompt: userPrompt })
+        $.post("/run_prompt", { 
+          prompt: userPrompt,
+          name: userName, // 新增：发送 name 参数
+          model: userModel,  // 新增：发送 model 参数
+          path: userPath,     // 新增：发送 path 参数
+          config: userConfig,  // 新增：发送 config 参数
+          org: userOrg         // 新增：发送 org 参数
+      })
             .done(function(response) {
                 if (response.status === "success") {
                     // 后端执行成功：在聊天窗口添加系统提示
