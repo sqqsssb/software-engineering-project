@@ -2,7 +2,11 @@
 <html>
 
 <head>
+<<<<<<< HEAD
     <title>TalkSE</title>
+=======
+    <title>ChatDev</title>
+>>>>>>> Stage-user-control-function-branch
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/marked@3.0.7/marked.min.js"></script>
@@ -21,6 +25,7 @@
     <link rel="stylesheet" href="static/css/style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.2.0/styles/monokai-sublime.min.css">
     <style>
+<<<<<<< HEAD
         body {
             background-color: #E0F7FA; /* 浅蓝色背景 */
             font-family: sans-serif; /* 使用更现代的字体 */
@@ -43,11 +48,22 @@
             padding: 30px; /* 添加内边距 */
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* 添加阴影效果 */
             border-radius: 15px; /* 增加圆角 */
+=======
+        .custom-text-block {
+            background-color: #f0f0f0;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 20px 0;
+            text-align: center;
+            font-size: 16px;
+            color: #333;
+>>>>>>> Stage-user-control-function-branch
         }
 
         .visualizer-container {
             display: flex;
             justify-content: center;
+<<<<<<< HEAD
             flex-wrap: wrap; /* 允许换行 */
             padding-top: 20px; /* 调整内边距 */
             padding-bottom: 20px;
@@ -90,12 +106,21 @@
         .visualizer-box a button:hover,
         .visualizer-box .btn-primary:hover {
             background-color: #0056b3; /* 悬停时颜色变深 */
+=======
+            align-items: center;
+        }
+
+        .visualizer-box {
+            width: 30%;
+            text-align: center;
+>>>>>>> Stage-user-control-function-branch
         }
 
         .visualizer-info {
             text-align: center;
             font-size: 14px;
             color: #666;
+<<<<<<< HEAD
             margin-top: 15px; /* 调整上边距 */
             flex-grow: 1; /* 让信息段落填充剩余空间 */
             display: flex; /* 使用 flex 布局 */
@@ -158,6 +183,9 @@
             margin-top: 20px; /* 调整上边距 */
         }
 
+=======
+        }
+>>>>>>> Stage-user-control-function-branch
     </style>
     <script>
         hljs.initHighlightingOnLoad();
@@ -166,7 +194,11 @@
 
 <body>
     <div class="d-flex justify-content-center">
+<<<<<<< HEAD
 
+=======
+        <img src="static/figures/title.png" alt="ChatDev Title" id="title-image" style="width: 100%; max-width: 300px;">
+>>>>>>> Stage-user-control-function-branch
     </div>
     <div class="visualizer-container">
         <div class="visualizer-box">
@@ -187,12 +219,16 @@
         <div class="visualizer-box">
             <br>
             <div class="input-group mb-3">
+<<<<<<< HEAD
                 <input type="text" class="form-control" id="user-name" placeholder="Enter project name...">
                 <input type="text" class="form-control" id="user-prompt" placeholder="Enter your prompt here...">
                 <input type="text" class="form-control" id="user-model" placeholder="Enter GPT model (e.g. GPT_4)">
                 <input type="text" class="form-control" id="user-path" placeholder="Enter file directory (optional)">
                 <input type="text" class="form-control" id="user-config" placeholder="Enter config file path (optional)">
                 <input type="text" class="form-control" id="user-org" placeholder="Enter organization name (optional)">
+=======
+                <input type="text" class="form-control" id="user-prompt" placeholder="Enter your prompt here...">
+>>>>>>> Stage-user-control-function-branch
                 <div class="input-group-append">
                     <button type="button" class="btn btn-primary" id="run-button">Run ChatDev</button>
                 </div>

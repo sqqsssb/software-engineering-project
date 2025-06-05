@@ -523,8 +523,11 @@ function updateCompanyWorking(character) {
     var left_bias = coordSet[character].left;
     var top_bias = coordSet[character].top;
     var img = document.getElementById(imgid);
+<<<<<<< HEAD
     console.log("imgid:", imgid);  // 打印当前查找的 ID
     console.log("img:", img);      // 打印获取到的元素（可能为 null）
+=======
+>>>>>>> Stage-user-control-function-branch
 
     img.style.display = "block";
     img.style.left = left_bias;

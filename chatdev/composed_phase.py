@@ -58,11 +58,21 @@ class ComposedPhase(ABC):
             assistant_role_name = self.config_phase[phase]['assistant_role_name']
             user_role_name = self.config_phase[phase]['user_role_name']
             phase_prompt = "\n".join(self.config_phase[phase]['phase_prompt'])
+<<<<<<< HEAD
+=======
+            assistant_role_prompt = self.role_prompts.get(assistant_role_name, "")
+            user_role_prompt = self.role_prompts.get(user_role_name, "")
+>>>>>>> Stage-user-control-function-branch
             phase_module = importlib.import_module("chatdev.phase")
             phase_class = getattr(phase_module, phase)
             phase_instance = phase_class(assistant_role_name=assistant_role_name,
                                          user_role_name=user_role_name,
                                          phase_prompt=phase_prompt,
+<<<<<<< HEAD
+=======
+                                         assistant_role_prompt=assistant_role_prompt,
+                                         user_role_prompt=user_role_prompt,
+>>>>>>> Stage-user-control-function-branch
                                          role_prompts=self.role_prompts,
                                          phase_name=phase,
                                          model_type=self.model_type,
