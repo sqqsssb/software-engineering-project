@@ -1,19 +1,3 @@
-<<<<<<< HEAD
-import html
-import logging
-import re
-import time
-
-import markdown
-import inspect
-from camel.messages.system_messages import SystemMessage
-from visualizer.app import send_msg
-
-
-def now():
-    return time.strftime("%Y%m%d%H%M%S", time.localtime())
-
-=======
 import logging
 import requests
 import os
@@ -47,7 +31,6 @@ def convert_to_markdown_table(records_kv):
 
 def escape_string(s):
     return str(s).replace("\n", "\\n").replace("\t", "\\t")
->>>>>>> Stage-user-control-function-branch
 
 def log_visualize(role, content=None):
     """
@@ -62,14 +45,10 @@ def log_visualize(role, content=None):
     """
     if not content:
         logging.info(role + "\n")
-<<<<<<< HEAD
-        send_msg("System", role)
-=======
         try:
             send_msg("System", role)
         except:
             pass
->>>>>>> Stage-user-control-function-branch
         print(role + "\n")
     else:
         print(str(role) + ": " + str(content) + "\n")
@@ -85,53 +64,6 @@ def log_visualize(role, content=None):
         else:
             role = str(role)
             content = str(content)
-<<<<<<< HEAD
-        send_msg(role, content)
-
-
-def convert_to_markdown_table(records_kv):
-    # Create the Markdown table header
-    header = "| Parameter | Value |\n| --- | --- |"
-
-    # Create the Markdown table rows
-    rows = [f"| **{key}** | {value} |" for (key, value) in records_kv]
-
-    # Combine the header and rows to form the final Markdown table
-    markdown_table = header + "\n" + '\n'.join(rows)
-
-    return markdown_table
-
-
-def log_arguments(func):
-    def wrapper(*args, **kwargs):
-        sig = inspect.signature(func)
-        params = sig.parameters
-
-        all_args = {}
-        all_args.update({name: value for name, value in zip(params.keys(), args)})
-        all_args.update(kwargs)
-
-        records_kv = []
-        for name, value in all_args.items():
-            if name in ["self", "chat_env", "task_type"]:
-                continue
-            value = escape_string(value)
-            records_kv.append([name, value])
-        records = f"**[{func.__name__}]**\n\n" + convert_to_markdown_table(records_kv)
-        log_visualize("System", records)
-
-        return func(*args, **kwargs)
-
-    return wrapper
-
-def escape_string(value):
-    value = str(value)
-    value = html.unescape(value)
-    value = markdown.markdown(value)
-    value = re.sub(r'<[^>]*>', '', value)
-    value = value.replace("\n", " ")
-    return value
-=======
         try:
             send_msg(role, content)
         except:
@@ -158,4 +90,3 @@ def now():
         str: 格式为 'YYYY-MM-DD_HH-MM-SS' 的时间字符串
     """
     return datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
->>>>>>> Stage-user-control-function-branch

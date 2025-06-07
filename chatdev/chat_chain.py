@@ -99,20 +99,14 @@ class ChatChain:
             assistant_role_name = self.config_phase[phase]['assistant_role_name']
             user_role_name = self.config_phase[phase]['user_role_name']
             phase_prompt = "\n\n".join(self.config_phase[phase]['phase_prompt'])
-<<<<<<< HEAD
-=======
             assistant_role_prompt = self.role_prompts.get(assistant_role_name, "")
             user_role_prompt = self.role_prompts.get(user_role_name, "")
->>>>>>> Stage-user-control-function-branch
             phase_class = getattr(self.phase_module, phase)
             phase_instance = phase_class(assistant_role_name=assistant_role_name,
                                          user_role_name=user_role_name,
                                          phase_prompt=phase_prompt,
-<<<<<<< HEAD
-=======
                                          assistant_role_prompt=assistant_role_prompt,
                                          user_role_prompt=user_role_prompt,
->>>>>>> Stage-user-control-function-branch
                                          role_prompts=self.role_prompts,
                                          phase_name=phase,
                                          model_type=self.model_type,
@@ -142,17 +136,6 @@ class ChatChain:
         phase_type = phase_item['phaseType']
         # For SimplePhase, just look it up from self.phases and conduct the "Phase.execute" method
         if phase_type == "SimplePhase":
-<<<<<<< HEAD
-            print(f"现在开始执行SimplePhase：{phase}")
-            max_turn_step = phase_item['max_turn_step']
-            need_reflect = check_bool(phase_item['need_reflect'])
-            if phase in self.phases:
-                print(f"执行phases中的{phase}")
-                print("开始执行chat_chain中的self.phases[phase].execute")
-                self.chat_env = self.phases[phase].execute(self.chat_env,
-                                                           self.chat_turn_limit_default if max_turn_step <= 0 else max_turn_step,
-                                                           need_reflect)
-=======
             print(f"\n现在开始执行阶段：{phase}")
             max_turn_step = phase_item['max_turn_step']
             need_reflect = check_bool(phase_item['need_reflect'])
@@ -200,7 +183,6 @@ class ChatChain:
                         print(f"\n文档已生成：{doc_path}")
                     else:
                         print("无效的选项，请重新输入")
->>>>>>> Stage-user-control-function-branch
             else:
                 raise RuntimeError(f"Phase '{phase}' is not yet implemented in chatdev.phase")
         # For ComposedPhase, we create instance here then conduct the "ComposedPhase.execute" method
@@ -358,12 +340,6 @@ class ChatChain:
 
         post_info = "**[Post Info]**\n\n"
         now_time = now()
-<<<<<<< HEAD
-        time_format = "%Y%m%d%H%M%S"
-        datetime1 = datetime.strptime(self.start_time, time_format)
-        datetime2 = datetime.strptime(now_time, time_format)
-        duration = (datetime2 - datetime1).total_seconds()
-=======
         # 修改时间格式处理
         time_format = "%Y-%m-%d_%H-%M-%S"
         try:
@@ -374,7 +350,6 @@ class ChatChain:
             # 如果时间格式不匹配，使用默认值
             duration = 0
             print("警告：无法计算持续时间，使用默认值0秒")
->>>>>>> Stage-user-control-function-branch
 
         post_info += "Software Info: {}".format(
             get_info(self.chat_env.env_dict['directory'], self.log_filepath) + "\n\n🕑**duration**={:.2f}s\n\n".format(

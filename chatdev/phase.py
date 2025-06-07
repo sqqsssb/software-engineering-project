@@ -2,46 +2,26 @@ import json
 import os
 import re
 from abc import ABC, abstractmethod
-<<<<<<< HEAD
-from typing import List
-=======
 from typing import List, Dict, Any, Optional
->>>>>>> Stage-user-control-function-branch
 
 import mysql
 from mysql.connector import Error
 
-<<<<<<< HEAD
-from camel.agents import RolePlaying
-=======
 from camel.agents import RolePlaying, ChatAgent
->>>>>>> Stage-user-control-function-branch
 from camel.messages import ChatMessage
-from camel.typing import TaskType, ModelType
+from camel.typing import TaskType, ModelType, RoleType
 from chatdev.chat_env import ChatEnv
 from chatdev.statistics import get_info
 from chatdev.utils import log_visualize, log_arguments
 from ecl import memory
 from ecl.db_config import create_connection, close_connection
 from ecl.memory import MemoryBase
-<<<<<<< HEAD
-=======
 from chatdev.phase_state import set_current_phase
->>>>>>> Stage-user-control-function-branch
 
 
 class Phase(ABC):
 
     def __init__(self,
-<<<<<<< HEAD
-                 assistant_role_name,
-                 user_role_name,
-                 phase_prompt,
-                 role_prompts,
-                 phase_name,
-                 model_type,
-                 log_filepath):
-=======
                  assistant_role_name: str,
                  user_role_name: str,
                  phase_prompt: str,
@@ -57,33 +37,12 @@ class Phase(ABC):
                  role_prompts: Dict = None,
                  log_filepath: str = None,
                  ):
->>>>>>> Stage-user-control-function-branch
         """
 
         Args:
             assistant_role_name: who receives chat in a phase
             user_role_name: who starts the chat in a phase
             phase_prompt: prompt of this phase
-<<<<<<< HEAD
-            role_prompts: prompts of all roles
-            phase_name: name of this phase
-        """
-        self.seminar_conclusion = None
-        self.assistant_role_name = assistant_role_name
-        self.user_role_name = user_role_name
-        self.phase_prompt = phase_prompt
-        self.phase_env = dict()
-        self.phase_name = phase_name
-        print(f"Phase初始化时的self.phase_name:{self.phase_name}")
-        self.assistant_role_prompt = role_prompts[assistant_role_name]
-        self.user_role_prompt = role_prompts[user_role_name]
-        self.ceo_prompt = role_prompts["Chief Executive Officer"]
-        self.counselor_prompt = role_prompts["Counselor"]
-        self.max_retries = 3
-        self.reflection_prompt = """Here is a conversation between two roles: {conversations} {question}"""
-        self.model_type = model_type
-        self.log_filepath = log_filepath
-=======
             phase_name: name of this phase
             assistant_role_prompt: prompt for assistant role
             user_role_prompt: prompt for user role
@@ -139,7 +98,6 @@ class Phase(ABC):
             'needs_restart': False,
             'restart_prompt': None
         })
->>>>>>> Stage-user-control-function-branch
 
     @log_arguments
     def chatting(
@@ -160,31 +118,7 @@ class Phase(ABC):
             placeholders=None,
             chat_turn_limit=10
     ) -> str:
-<<<<<<< HEAD
-        """
 
-        Args:
-            chat_env: global chatchain environment
-            task_prompt: user query prompt for building the software
-            assistant_role_name: who receives the chat
-            user_role_name: who starts the chat
-            phase_prompt: prompt of the phase
-            phase_name: name of the phase
-            assistant_role_prompt: prompt of assistant role
-            user_role_prompt: prompt of user role
-            task_type: task type
-            need_reflect: flag for checking reflection
-            with_task_specify: with task specify
-            model_type: model type
-            placeholders: placeholders for phase environment to generate phase prompt
-            chat_turn_limit: turn limits in each chat
-
-        Returns:
-
-        """
-
-=======
->>>>>>> Stage-user-control-function-branch
         if placeholders is None:
             placeholders = {}
         assert 1 <= chat_turn_limit <= 100
@@ -194,8 +128,6 @@ class Phase(ABC):
         if not chat_env.exist_employee(user_role_name):
             raise ValueError(f"{user_role_name} not recruited in ChatEnv.")
 
-<<<<<<< HEAD
-=======
         # 更新阶段状态
         self.update_phase_state(
             task_prompt=task_prompt,
@@ -209,7 +141,6 @@ class Phase(ABC):
         if user_role_prompt is None:
             user_role_prompt = self.role_prompts.get(user_role_name, "")
 
->>>>>>> Stage-user-control-function-branch
         print(f"RolePlaying初始化时的phase_name：{phase_name}")
         # init role play
         role_play_session = RolePlaying(
@@ -223,11 +154,7 @@ class Phase(ABC):
             memory=memory,
             model_type=model_type,
             background_prompt=chat_env.config.background_prompt,
-<<<<<<< HEAD
             phase_name = phase_name,
-=======
-            phase_name=phase_name,
->>>>>>> Stage-user-control-function-branch
         )
         log_visualize("System", role_play_session.assistant_sys_msg)
         log_visualize("System", role_play_session.user_sys_msg)
@@ -235,26 +162,6 @@ class Phase(ABC):
         # start the chat
         _, input_user_msg = role_play_session.init_chat(None, placeholders, phase_prompt)
         seminar_conclusion = None
-<<<<<<< HEAD
-        # handle chats
-        # the purpose of the chatting in one phase is to get a seminar conclusion
-        # there are two types of conclusion
-        # 1. with "<INFO>" mark
-        # 1.1 get seminar conclusion flag (ChatAgent.info) from assistant or user role, which means there exist special "<INFO>" mark in the conversation
-        # 1.2 add "<INFO>" to the reflected content of the chat (which may be terminated chat without "<INFO>" mark)
-        # 2. without "<INFO>" mark, which means the chat is terminated or normally ended without generating a marked conclusion, and there is no need to reflect
-
-        for i in range(chat_turn_limit):
-            # start the chat, we represent the user and send msg to assistant
-            # 1. so the input_user_msg should be assistant_role_prompt + phase_prompt
-            # 2. then input_user_msg send to LLM and get assistant_response
-            # 3. now we represent the assistant and send msg to user, so the input_assistant_msg is user_role_prompt + assistant_response
-            # 4. then input_assistant_msg send to LLM and get user_response
-            # all above are done in role_play_session.step, which contains two interactions with LLM
-            # the first interaction is logged in role_play_session.init_chat
-
-=======
-
         # 检查是否需要重新开始
         if self.phase_state['needs_restart']:
             if self.phase_state['restart_prompt']:
@@ -268,32 +175,16 @@ class Phase(ABC):
         # handle chats
         for i in range(chat_turn_limit):
             self.update_phase_state(current_turn=i + 1)
-            
->>>>>>> Stage-user-control-function-branch
             assistant_response, user_response = role_play_session.step(input_user_msg, chat_turn_limit == 1)
 
             conversation_meta = "**" + assistant_role_name + "<->" + user_role_name + " on : " + str(
                 phase_name) + ", turn " + str(i) + "**\n\n"
 
-<<<<<<< HEAD
-            # TODO: max_tokens_exceeded errors here
             if isinstance(assistant_response.msg, ChatMessage):
-                # we log the second interaction here
-=======
-            if isinstance(assistant_response.msg, ChatMessage):
->>>>>>> Stage-user-control-function-branch
                 log_visualize(role_play_session.assistant_agent.role_name,
                               conversation_meta + "[" + role_play_session.user_agent.system_message.content + "]\n\n" + assistant_response.msg.content)
                 if role_play_session.assistant_agent.info:
                     seminar_conclusion = assistant_response.msg.content
-<<<<<<< HEAD
-                    break
-                if assistant_response.terminated:
-                    break
-
-            if isinstance(user_response.msg, ChatMessage):
-                # here is the result of the second interaction, which may be used to start the next chat turn
-=======
                     self.update_phase_state(is_completed=True)
                     break
                 if assistant_response.terminated:
@@ -301,25 +192,16 @@ class Phase(ABC):
                     break
 
             if isinstance(user_response.msg, ChatMessage):
->>>>>>> Stage-user-control-function-branch
                 log_visualize(role_play_session.user_agent.role_name,
                               conversation_meta + "[" + role_play_session.assistant_agent.system_message.content + "]\n\n" + user_response.msg.content)
                 if role_play_session.user_agent.info:
                     seminar_conclusion = user_response.msg.content
-<<<<<<< HEAD
-                    break
-                if user_response.terminated:
-                    break
-
-            # continue the chat
-=======
                     self.update_phase_state(is_completed=True)
                     break
                 if user_response.terminated:
                     self.update_phase_state(is_completed=True)
                     break
 
->>>>>>> Stage-user-control-function-branch
             if chat_turn_limit > 1 and isinstance(user_response.msg, ChatMessage):
                 input_user_msg = user_response.msg
             else:
@@ -344,15 +226,11 @@ class Phase(ABC):
         log_visualize("**[Seminar Conclusion]**:\n\n {}".format(seminar_conclusion))
         seminar_conclusion = seminar_conclusion.split("<INFO>")[-1]
 
-<<<<<<< HEAD
-=======
         # 更新阶段状态
         self.update_phase_state(
             is_completed=True,
             seminar_conclusion=seminar_conclusion
         )
-
->>>>>>> Stage-user-control-function-branch
         return seminar_conclusion
 
     def self_reflection(self,
@@ -389,8 +267,6 @@ class Phase(ABC):
         else:
             raise ValueError(f"Reflection of phase {phase_name}: Not Assigned.")
 
-<<<<<<< HEAD
-=======
         # 确保 reflection_prompt 不为 None
         if self.reflection_prompt is None:
             self.reflection_prompt = """You are a counselor. You need to help the CEO to make a decision based on the following conversations between the CEO and other roles.
@@ -399,7 +275,6 @@ Here are the conversations:
 
 {question}"""
 
->>>>>>> Stage-user-control-function-branch
         # Reflections actually is a special phase between CEO and counselor
         # They read the whole chatting history of this phase and give refined conclusion of this phase
         reflected_content = \
