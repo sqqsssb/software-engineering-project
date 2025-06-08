@@ -90,3 +90,20 @@ def now():
         str: 格式为 'YYYY-MM-DD_HH-MM-SS' 的时间字符串
     """
     return datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+
+
+def get_easyDict_from_filepath(filepath):
+    """从文件路径中读取并返回 EasyDict 对象
+
+    Args:
+        filepath: 文件路径
+
+    Returns:
+        EasyDict: 从文件中读取的 EasyDict 对象
+    """
+    import json
+    from easydict import EasyDict
+
+    with open(filepath, 'r', encoding='utf-8') as f:
+        data = json.load(f)
+    return EasyDict(data)

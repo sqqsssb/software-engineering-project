@@ -21,7 +21,7 @@ def retrieve_related_memories(phase_data):
             role_info = ", ".join([f"{role}: {title}" for role, title in role_settings.items()])
         except:
             role_info = phase_data['role_settings']
-        
+
         # 创建SystemMessage对象
         system_message = SystemMessage(
             role_name="Memory Retriever",
@@ -34,10 +34,10 @@ def retrieve_related_memories(phase_data):
             - 阶段结论：{phase_data['phase_conclusion']}
             """
         )
-        
+
         # 创建ChatAgent实例
         chat_agent = ChatAgent(system_message=system_message)
-        
+
         # 构建检索提示
         prompt = f"""
         请检索与以下内容相关的记忆：
@@ -46,10 +46,10 @@ def retrieve_related_memories(phase_data):
         任务：{phase_data['task_prompt']}
         结论：{phase_data['phase_conclusion']}
         """
-        
+
         # 检索相关记忆
         memories = chat_agent.retrieve_memories(prompt)
-        
+
         # 格式化记忆内容
         formatted_memories = []
         for memory in memories:
@@ -58,11 +58,12 @@ def retrieve_related_memories(phase_data):
                 'relevance': memory.relevance,
                 'timestamp': memory.timestamp
             })
-            
+
         return formatted_memories
     except Exception as e:
         print(f"检索记忆时出错: {str(e)}")
         return []
+
 
 def generate_document_with_memories(phase_data, memories):
     """根据阶段数据和检索到的记忆生成文档"""
@@ -70,57 +71,61 @@ def generate_document_with_memories(phase_data, memories):
     task_prompt = phase_data['task_prompt']
     phase_conclusion = phase_data['phase_conclusion']
     role_settings = json.loads(phase_data['role_settings'])
-    
+
     # 创建ChatAgent实例，添加system_message参数
-    system_message = f"""你是一个专业的软件工程文档生成助手，负责生成{phase_name}阶段的文档。
-    请根据提供的阶段信息、角色设置和相关记忆，生成专业的软件工程文档。
-    """
+    system_message = SystemMessage(
+        role_name="Document Generator",
+        role_type=RoleType.ASSISTANT,
+        content=f"""你是一个专业的软件工程文档生成助手，负责生成{phase_name}阶段的文档。
+        请根据提供的阶段信息、角色设置和相关记忆，生成专业的软件工程文档。
+        """
+    )
     chat_agent = ChatAgent(system_message=system_message)
-    
+
     # 根据不同阶段构建不同的提示
     if phase_name == "需求分析":
         prompt = f"""
         请根据以下信息生成软件需求规格说明书(SRS)：
-        
+
         1. 基本信息：
         - 任务描述：{task_prompt}
         - 分析结论：{phase_conclusion}
         - 参与角色：{format_roles(role_settings)}
-        
+
         2. 相关记忆：
         {json.dumps(memories, ensure_ascii=False, indent=2)}
-        
+
         请生成一个专业的软件需求规格说明书，包含以下章节：
-        
+
         1. 引言
            - 目的
            - 范围
            - 术语定义
-        
+
         2. 系统概述
            - 系统描述
            - 系统功能
            - 用户特征
-        
+
         3. 功能需求
            - 功能描述
            - 用例分析
            - 用户故事
-        
+
         4. 非功能需求
            - 性能需求
            - 安全需求
            - 可靠性需求
            - 可维护性需求
-        
+
         5. 系统接口
            - 用户接口
            - 外部接口
-        
+
         6. 其他需求
            - 数据需求
            - 约束条件
-        
+
         7. 附录
            - 修订历史
            - 参考文档
@@ -128,48 +133,48 @@ def generate_document_with_memories(phase_data, memories):
     elif phase_name == "系统设计":
         prompt = f"""
         请根据以下信息生成软件设计文档(SDD)：
-        
+
         1. 基本信息：
         - 任务描述：{task_prompt}
         - 设计结论：{phase_conclusion}
         - 参与角色：{format_roles(role_settings)}
-        
+
         2. 相关记忆：
         {json.dumps(memories, ensure_ascii=False, indent=2)}
-        
+
         请生成一个专业的软件设计文档，包含以下章节：
-        
+
         1. 引言
            - 目的
            - 范围
            - 术语定义
-        
+
         2. 系统架构
            - 架构概述
            - 技术架构
            - 部署架构
-        
+
         3. 详细设计
            - 模块设计
            - 接口设计
            - 数据设计
            - 安全设计
-        
+
         4. 系统接口
            - 外部接口
            - 内部接口
            - API设计
-        
+
         5. 数据设计
            - 数据模型
            - 数据流
            - 数据存储
-        
+
         6. 安全设计
            - 认证授权
            - 数据安全
            - 通信安全
-        
+
         7. 附录
            - 修订历史
            - 参考文档
@@ -177,47 +182,47 @@ def generate_document_with_memories(phase_data, memories):
     elif phase_name == "编码实现":
         prompt = f"""
         请根据以下信息生成软件实现文档：
-        
+
         1. 基本信息：
         - 任务描述：{task_prompt}
         - 实现结论：{phase_conclusion}
         - 参与角色：{format_roles(role_settings)}
-        
+
         2. 相关记忆：
         {json.dumps(memories, ensure_ascii=False, indent=2)}
-        
+
         请生成一个专业的软件实现文档，包含以下章节：
-        
+
         1. 引言
            - 目的
            - 范围
            - 术语定义
-        
+
         2. 开发环境
            - 开发工具
            - 运行环境
            - 依赖说明
-        
+
         3. 实现细节
            - 代码结构
            - 核心算法
            - 关键实现
-        
+
         4. 接口实现
            - API实现
            - 接口说明
            - 调用示例
-        
+
         5. 测试说明
            - 单元测试
            - 集成测试
            - 测试用例
-        
+
         6. 部署说明
            - 部署步骤
            - 配置说明
            - 注意事项
-        
+
         7. 附录
            - 修订历史
            - 参考文档
@@ -225,47 +230,47 @@ def generate_document_with_memories(phase_data, memories):
     elif phase_name == "测试验证":
         prompt = f"""
         请根据以下信息生成软件测试报告：
-        
+
         1. 基本信息：
         - 任务描述：{task_prompt}
         - 测试结论：{phase_conclusion}
         - 参与角色：{format_roles(role_settings)}
-        
+
         2. 相关记忆：
         {json.dumps(memories, ensure_ascii=False, indent=2)}
-        
+
         请生成一个专业的软件测试报告，包含以下章节：
-        
+
         1. 引言
            - 目的
            - 范围
            - 术语定义
-        
+
         2. 测试概述
            - 测试目标
            - 测试范围
            - 测试环境
-        
+
         3. 测试计划
            - 测试策略
            - 测试方法
            - 测试工具
-        
+
         4. 测试执行
            - 功能测试
            - 性能测试
            - 安全测试
-        
+
         5. 测试结果
            - 测试用例
            - 测试结果
            - 问题统计
-        
+
         6. 问题跟踪
            - 问题描述
            - 解决方案
            - 验证结果
-        
+
         7. 附录
            - 修订历史
            - 参考文档
@@ -274,33 +279,34 @@ def generate_document_with_memories(phase_data, memories):
         # 默认使用通用文档模板
         prompt = f"""
         请根据以下信息生成{phase_name}阶段的软件工程文档：
-        
+
         1. 基本信息：
         - 任务描述：{task_prompt}
         - 阶段结论：{phase_conclusion}
         - 参与角色：{format_roles(role_settings)}
-        
+
         2. 相关记忆：
         {json.dumps(memories, ensure_ascii=False, indent=2)}
-        
+
         请生成一个专业的软件工程文档，包含必要的章节和内容。
         """
-    
+
     try:
         # 使用AI生成文档
         response = chat_agent.chat(prompt)
-        
+
         # 解析AI响应
         if response and isinstance(response, str):
             return response
         else:
             # 如果AI生成失败，使用默认模板
             return generate_default_document(phase_data)
-            
+
     except Exception as e:
         print(f"AI生成文档时出错: {str(e)}")
         # 出错时使用默认模板
         return generate_default_document(phase_data)
+
 
 def generate_default_document(phase_data):
     """生成默认文档模板"""
@@ -308,7 +314,7 @@ def generate_default_document(phase_data):
     task_prompt = phase_data['task_prompt']
     phase_conclusion = phase_data['phase_conclusion']
     role_settings = json.loads(phase_data['role_settings'])
-    
+
     # 根据不同阶段生成不同格式的文档
     if phase_name == "需求分析":
         return f"""# 软件需求规格说明书 (SRS)
@@ -785,13 +791,15 @@ def generate_default_document(phase_data):
 - 文档3
 """
 
+
 def generate_document(phase_data):
     """根据阶段数据生成软件文档"""
     # 检索相关记忆
     memories = retrieve_related_memories(phase_data)
-    
+
     # 使用记忆生成文档
     return generate_document_with_memories(phase_data, memories)
+
 
 def format_roles(role_settings):
     """格式化角色信息"""
@@ -799,6 +807,7 @@ def format_roles(role_settings):
     for role, title in role_settings.items():
         roles.append(f"- {title} ({role})")
     return "\n".join(roles)
+
 
 @api.route('/seminar/<int:seminar_id>/phase/<phase_name>/document/export', methods=['GET'])
 def export_document(seminar_id, phase_name):
@@ -808,39 +817,40 @@ def export_document(seminar_id, phase_name):
             seminar_id=seminar_id,
             phase_name=phase_name
         ).first()
-        
+
         if not phase:
             return jsonify({
                 'error': 'Phase not found',
                 'message': f'No phase found for seminar {seminar_id} and phase {phase_name}'
             }), 404
-            
+
         if not phase.document:
             return jsonify({
                 'error': 'Document not found',
                 'message': 'No document generated for this phase yet'
             }), 404
-            
+
         # 创建内存文件
         output = BytesIO()
         output.write(phase.document.encode('utf-8'))
         output.seek(0)
-        
+
         # 生成文件名
         filename = f"{phase_name}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.md"
-        
+
         return send_file(
             output,
             mimetype='text/markdown',
             as_attachment=True,
             download_name=filename
         )
-        
+
     except Exception as e:
         return jsonify({
             'error': 'Internal server error',
             'message': str(e)
         }), 500
+
 
 @api.route('/seminar/<int:seminar_id>/phase/<phase_name>/document/preview', methods=['GET'])
 def preview_document(seminar_id, phase_name):
@@ -850,26 +860,26 @@ def preview_document(seminar_id, phase_name):
             seminar_id=seminar_id,
             phase_name=phase_name
         ).first()
-        
+
         if not phase:
             return jsonify({
                 'error': 'Phase not found',
                 'message': f'No phase found for seminar {seminar_id} and phase {phase_name}'
             }), 404
-            
+
         if not phase.document:
             return jsonify({
                 'error': 'Document not found',
                 'message': 'No document generated for this phase yet'
             }), 404
-            
+
         try:
             # 将Markdown转换为HTML
             html_content = markdown.markdown(
                 phase.document,
                 extensions=['extra', 'codehilite', 'tables']
             )
-            
+
             return jsonify({
                 'status': 'success',
                 'data': {
@@ -889,12 +899,13 @@ def preview_document(seminar_id, phase_name):
                     'generated_at': phase.updated_at.isoformat()
                 }
             })
-        
+
     except Exception as e:
         return jsonify({
             'error': 'Internal server error',
             'message': str(e)
         }), 500
+
 
 @api.route('/seminar/<int:seminar_id>/phase/<phase_name>/document/versions', methods=['GET'])
 def get_document_versions(seminar_id, phase_name):
@@ -904,17 +915,18 @@ def get_document_versions(seminar_id, phase_name):
             seminar_id=seminar_id,
             phase_name=phase_name
         ).order_by(DocumentVersion.version.desc()).all()
-        
+
         return jsonify({
             'status': 'success',
             'data': [version.to_dict() for version in versions]
         })
-        
+
     except Exception as e:
         return jsonify({
             'error': 'Internal server error',
             'message': str(e)
         }), 500
+
 
 @api.route('/seminar/<int:seminar_id>/phase/<phase_name>', methods=['GET'])
 def get_phase_state(seminar_id, phase_name):
@@ -924,23 +936,24 @@ def get_phase_state(seminar_id, phase_name):
             seminar_id=seminar_id,
             phase_name=phase_name
         ).first()
-        
+
         if not phase:
             return jsonify({
                 'error': 'Phase not found',
                 'message': f'No phase found for seminar {seminar_id} and phase {phase_name}'
             }), 404
-            
+
         return jsonify({
             'status': 'success',
             'data': phase.to_dict()
         })
-        
+
     except Exception as e:
         return jsonify({
             'error': 'Internal server error',
             'message': str(e)
         }), 500
+
 
 @api.route('/seminar/<int:seminar_id>/phase/<phase_name>', methods=['POST'])
 def update_phase_state(seminar_id, phase_name):
@@ -952,12 +965,12 @@ def update_phase_state(seminar_id, phase_name):
                 'error': 'Invalid request',
                 'message': 'No data provided'
             }), 400
-            
+
         phase = PhaseState.query.filter_by(
             seminar_id=seminar_id,
             phase_name=phase_name
         ).first()
-        
+
         if not phase:
             # 创建新阶段
             phase = PhaseState(
@@ -965,28 +978,28 @@ def update_phase_state(seminar_id, phase_name):
                 phase_name=phase_name
             )
             db.session.add(phase)
-            
+
         # 更新字段
         for field in ['task_prompt', 'role_settings', 'phase_conclusion']:
             if field in data:
                 setattr(phase, field, data[field])
-                
+
         if 'is_completed' in data:
             phase.is_completed = bool(data['is_completed'])
-            
+
         if 'needs_restart' in data:
             phase.needs_restart = bool(data['needs_restart'])
-            
+
         if 'restart_prompt' in data:
             phase.restart_prompt = data['restart_prompt']
-            
+
         db.session.commit()
-        
+
         # 如果阶段完成，生成文档并保存版本
         if phase.is_completed:
             document = generate_document(phase.to_dict())
             phase.document = document
-            
+
             # 创建新版本
             version = DocumentVersion(
                 seminar_id=seminar_id,
@@ -995,21 +1008,22 @@ def update_phase_state(seminar_id, phase_name):
                 version=DocumentVersion.get_next_version(seminar_id, phase_name)
             )
             db.session.add(version)
-            
+
         db.session.commit()
-        
+
         return jsonify({
             'status': 'success',
             'message': 'Phase state updated successfully',
             'data': phase.to_dict()
         })
-        
+
     except Exception as e:
         db.session.rollback()
         return jsonify({
             'error': 'Internal server error',
             'message': str(e)
         }), 500
+
 
 @api.route('/seminar/<int:seminar_id>/phase/<phase_name>/action', methods=['POST'])
 def phase_action(seminar_id, phase_name):
@@ -1021,30 +1035,30 @@ def phase_action(seminar_id, phase_name):
                 'error': 'Invalid request',
                 'message': 'Action is required'
             }), 400
-            
+
         action = data['action']
         if action not in ['continue', 'restart']:
             return jsonify({
                 'error': 'Invalid action',
                 'message': 'Action must be either "continue" or "restart"'
             }), 400
-            
+
         phase = PhaseState.query.filter_by(
             seminar_id=seminar_id,
             phase_name=phase_name
         ).first()
-        
+
         if not phase:
             return jsonify({
                 'error': 'Phase not found',
                 'message': f'No phase found for seminar {seminar_id} and phase {phase_name}'
             }), 404
-            
+
         if action == 'continue':
             phase.is_completed = True
             phase.needs_restart = False
             phase.restart_prompt = None
-            
+
             # 生成文档
             document = generate_document(phase.to_dict())
             phase.document = document
@@ -1053,21 +1067,22 @@ def phase_action(seminar_id, phase_name):
             phase.needs_restart = True
             phase.restart_prompt = data.get('restart_prompt')
             phase.document = None  # 清除之前的文档
-            
+
         db.session.commit()
-        
+
         return jsonify({
             'status': 'success',
             'message': f'Phase {action}ed successfully',
             'data': phase.to_dict()
         })
-        
+
     except Exception as e:
         db.session.rollback()
         return jsonify({
             'error': 'Internal server error',
             'message': str(e)
         }), 500
+
 
 @api.route('/seminar/<int:seminar_id>/phase/<phase_name>/document', methods=['GET'])
 def get_phase_document(seminar_id, phase_name):
@@ -1077,19 +1092,19 @@ def get_phase_document(seminar_id, phase_name):
             seminar_id=seminar_id,
             phase_name=phase_name
         ).first()
-        
+
         if not phase:
             return jsonify({
                 'error': 'Phase not found',
                 'message': f'No phase found for seminar {seminar_id} and phase {phase_name}'
             }), 404
-            
+
         if not phase.document:
             return jsonify({
                 'error': 'Document not found',
                 'message': 'No document generated for this phase yet'
             }), 404
-            
+
         return jsonify({
             'status': 'success',
             'data': {
@@ -1097,12 +1112,13 @@ def get_phase_document(seminar_id, phase_name):
                 'generated_at': phase.updated_at.isoformat()
             }
         })
-        
+
     except Exception as e:
         return jsonify({
             'error': 'Internal server error',
             'message': str(e)
         }), 500
+
 
 @api.route('/seminar/<int:seminar_id>/phase/<phase_name>/chat', methods=['POST'])
 def chatting(seminar_id, phase_name):
@@ -1144,10 +1160,10 @@ def chatting(seminar_id, phase_name):
             - 当前结论：{phase.phase_conclusion}
             """
         )
-        
+
         # 创建ChatAgent实例
         chat_agent = ChatAgent(system_message=system_message)
-        
+
         # 调用 ChatAgent 处理消息
         response = chat_agent.chat(data['message'])
 
@@ -1167,6 +1183,7 @@ def chatting(seminar_id, phase_name):
             'error': 'Internal server error',
             'message': str(e)
         }), 500
+
 
 @api.route('/seminar/<int:seminar_id>/phase/<phase_name>/control', methods=['POST'])
 def phase_control(seminar_id, phase_name):
@@ -1195,14 +1212,14 @@ def phase_control(seminar_id, phase_name):
             请根据阶段名称和角色设置检索相关的历史记录和结论。
             """
             chat_agent = ChatAgent(system_message=system_message)
-            
+
             # 解析角色设置
             try:
                 role_settings = json.loads(phase.role_settings)
                 role_info = ", ".join([f"{role}: {title}" for role, title in role_settings.items()])
             except:
                 role_info = phase.role_settings
-            
+
             # 构建检索提示
             prompt = f"""
             请检索与以下内容相关的记忆：
@@ -1211,7 +1228,7 @@ def phase_control(seminar_id, phase_name):
             任务：{phase.task_prompt}
             结论：{phase.phase_conclusion}
             """
-            
+
             memories = chat_agent.retrieve_memories(prompt)
             return jsonify({
                 'status': 'success',

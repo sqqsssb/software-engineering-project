@@ -13,6 +13,7 @@ from chatdev.chat_env import ChatEnv, ChatEnvConfig
 from chatdev.statistics import get_info
 from camel.web_spider import modal_trans
 from chatdev.utils import log_visualize, now
+from visualizer.api import generate_document
 
 
 def check_bool(s):
@@ -173,13 +174,16 @@ class ChatChain:
                         print("-" * 50)
                     elif user_input == "3":
                         # 生成文档
+                        phase_data = {
+                            'phase_name': phase,
+                            'task_prompt': self.chat_env.env_dict['task_prompt'],
+                            'phase_conclusion': phase_conclusion,
+                            'role_settings': json.dumps(self.phases[phase].phase_env)
+                        }
+                        document = generate_document(phase_data)
                         doc_path = os.path.join(self.chat_env.env_dict['directory'], f"{phase}_documentation.md")
                         with open(doc_path, "w", encoding="utf-8") as f:
-                            f.write(f"# {phase} 阶段文档\n\n")
-                            f.write(f"## 结论\n\n{phase_conclusion}\n\n")
-                            f.write(f"## 环境信息\n\n")
-                            for key, value in self.phases[phase].phase_env.items():
-                                f.write(f"- {key}: {value}\n")
+                            f.write(document)
                         print(f"\n文档已生成：{doc_path}")
                     else:
                         print("无效的选项，请重新输入")

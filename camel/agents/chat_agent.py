@@ -1,12 +1,12 @@
 # =========== Copyright 2023 @ CAMEL-AI.org. All Rights Reserved. ===========
-# Licensed under the Apache License, Version 2.0 (the “License”);
+# Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
 #     http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an “AS IS” BASIS,
+# distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
@@ -306,7 +306,7 @@ class ChatAgent(BaseAgent):
                 role_name="System",
                 role="system",
                 content=f"历史记忆：{memory_content}",
-                meta_dict=dict(), role_type = None,
+                meta_dict=dict(), role_type=None,
             )
             self.update_messages(memory_msg)
         print(f"ChatAgent的step函数中，relevant_memory = {relevant_memory}")
@@ -320,7 +320,8 @@ class ChatAgent(BaseAgent):
             messages = [self.system_message
                         ] + messages[-self.message_window_size:]
         openai_messages = [message.to_openai_message() for message in messages]
-        print(f"ChatAgent的step函数中，openai_messages = (relevant_memory + input_message).to_openai_message():{openai_messages}")
+        print(
+            f"ChatAgent的step函数中，openai_messages = (relevant_memory + input_message).to_openai_message():{openai_messages}")
         num_tokens = num_tokens_from_messages(openai_messages, self.model)
 
         # for openai_message in openai_messages:
@@ -381,3 +382,76 @@ class ChatAgent(BaseAgent):
             str: The string representation of the :obj:`ChatAgent`.
         """
         return f"ChatAgent({self.role_name}, {self.role_type}, {self.model})"
+
+    def retrieve_memories(self, input_message: str) -> List[str]:
+        """检索与当前阶段相关的记忆
+
+        Args:
+            input_message: 用户输入的消息
+
+        Returns:
+            List[str]: 检索到的记忆列表
+        """
+        try:
+            # 获取数据库连接
+            connection = create_connection()
+            if not connection:
+                return []
+
+            cursor = connection.cursor(dictionary=True)
+
+            # 构建查询 - 直接使用phase_name字段
+            query = """
+            SELECT content 
+            FROM memories 
+            WHERE phase_name = %s
+            ORDER BY created_at DESC
+            LIMIT %s
+            """
+
+            cursor.execute(query, (self.phase_name, self.top_k))
+            memories = cursor.fetchall()
+
+            # 关闭连接
+            cursor.close()
+            close_connection(connection)
+
+            # 返回记忆内容
+            return [memory['content'] for memory in memories]
+
+        except Exception as e:
+            print(f"检索记忆时出错: {str(e)}")
+            return []
+
+    def chat(self, input_message: str) -> str:
+        """处理用户输入并生成响应
+
+        Args:
+            input_message: 用户输入的消息
+
+        Returns:
+            str: 生成的响应
+        """
+        try:
+            # 检索相关记忆
+            memories = self.retrieve_memories(input_message)
+
+            # 构建提示
+            prompt = f"""当前阶段: {self.phase_name}
+相关记忆:
+{memories}
+用户输入: {input_message}"""
+
+            # 构造消息列表
+            messages = [
+                {"role": "system", "content": self.system_message.content},
+                {"role": "user", "content": prompt}
+            ]
+
+            # 生成响应
+            response = self.model_backend.run(messages=messages)
+            return response.choices[0].message.content
+
+        except Exception as e:
+            print(f"生成响应时出错: {str(e)}")
+            return "抱歉，我遇到了一些问题，无法生成响应。"
