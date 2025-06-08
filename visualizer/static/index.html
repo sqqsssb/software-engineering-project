@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+<<<<<<< HEAD
+    <title>TalkSE</title>
+=======
+    <title>ChatDev</title>
+>>>>>>> Stage-user-control-function-branch
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked@3.0.7/marked.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.28.0/prism.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.28.0/components/prism-markup.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.28.0/components/prism-javascript.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.28.0/plugins/line-numbers/prism-line-numbers.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.28.0/plugins/copy-to-clipboard/prism-copy-to-clipboard.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.8/clipboard.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/lodash@4.17.21/lodash.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.2.0/highlight.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.8/clipboard.min.js"></script>
+    <script src="static/js/main.js"></script>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.28.0/themes/prism-okaidia.min.css">
+    <link rel="stylesheet" href="static/css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.2.0/styles/monokai-sublime.min.css">
+    <style>
+<<<<<<< HEAD
+        body {
+            background-color: #E0F7FA; /* 浅蓝色背景 */
+            font-family: sans-serif; /* 使用更现代的字体 */
+            padding-top: 20px; /* 顶部留白 */
+            padding-bottom: 20px; /* 底部留白 */
+        }
+
+        #title-image {
+            display: block;
+            margin: 0 auto 30px auto; /* 居中并增加下边距 */
+            max-width: 300px; /* 确保图片不会过大 */
+        }
+
+        /* 主要内容区域的样式，模拟白色容器效果 */
+        .visualizer-container,
+        .custom-text-block {
+            background-color: #FFFFFF; /* 白色背景 */
+            margin: 20px auto; /* 居中并添加上下边距 */
+            max-width: 1000px; /* 设置最大宽度 */
+            padding: 30px; /* 添加内边距 */
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* 添加阴影效果 */
+            border-radius: 15px; /* 增加圆角 */
+=======
+        .custom-text-block {
+            background-color: #f0f0f0;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 20px 0;
+            text-align: center;
+            font-size: 16px;
+            color: #333;
+>>>>>>> Stage-user-control-function-branch
+        }
+
+        .visualizer-container {
+            display: flex;
+            justify-content: center;
+<<<<<<< HEAD
+            flex-wrap: wrap; /* 允许换行 */
+            padding-top: 20px; /* 调整内边距 */
+            padding-bottom: 20px;
+        }
+
+        .visualizer-box {
+            width: 280px; /* 固定宽度 */
+            margin: 15px; /* 增加外边距 */
+            padding: 20px; /* 添加内边距 */
+            text-align: center;
+            background-color: #FFFFFF; /* 确保 box 有白色背景 */
+            border-radius: 15px; /* 增加圆角 */
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* 阴影效果 */
+            transition: box-shadow 0.3s ease; /* 阴影过渡效果 */
+            display: flex; /* 使用 flex 布局 */
+            flex-direction: column; /* 垂直排列子元素 */
+            justify-content: space-between; /* 子元素之间有空隙 */
+             min-height: 180px; /* 增加最小高度使盒子更规整 */
+        }
+
+         .visualizer-box:hover {
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15); /* 悬停时阴影加深 */
+        }
+
+        /* 调整按钮样式 */
+        .visualizer-box a button,
+        .visualizer-box .btn-primary {
+            background-color: #007BFF; /* 蓝色背景 */
+            color: white; /* 白色文字 */
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px; /* 增加按钮圆角 */
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+            font-size: 16px;
+            width: 100%; /* 按钮宽度占满父容器 */
+             margin-top: auto; /* 将按钮推到底部 */
+        }
+
+        .visualizer-box a button:hover,
+        .visualizer-box .btn-primary:hover {
+            background-color: #0056b3; /* 悬停时颜色变深 */
+=======
+            align-items: center;
+        }
+
+        .visualizer-box {
+            width: 30%;
+            text-align: center;
+>>>>>>> Stage-user-control-function-branch
+        }
+
+        .visualizer-info {
+            text-align: center;
+            font-size: 14px;
+            color: #666;
+<<<<<<< HEAD
+            margin-top: 15px; /* 调整上边距 */
+            flex-grow: 1; /* 让信息段落填充剩余空间 */
+            display: flex; /* 使用 flex 布局 */
+            align-items: center; /* 垂直居中 */
+            justify-content: center; /* 水平居中 */
+        }
+
+         /* 针对 Prompt 输入区域的样式调整 */
+        .visualizer-box .input-group {
+            margin-bottom: 0; /* 移除底部默认 margin */
+             align-items: center; /* 垂直居中输入框和按钮 */
+             flex-direction: column; /* 使输入框和按钮上下排列 */
+        }
+
+         .visualizer-box .input-group .form-control {
+             flex-grow: 1; /* 输入框填充剩余空间 */
+             border-radius: 8px; /* 增加圆角 */
+             height: calc(1.5em + .75rem + 2px); /* 匹配按钮高度 */
+             margin-bottom: 10px; /* 增加输入框和按钮之间的间距 */
+             width: 100%; /* 输入框宽度占满父容器 */
+         }
+
+        .visualizer-box .input-group-append {
+             width: 100%; /* 容器宽度占满 */
+        }
+
+        .visualizer-box .input-group .btn-primary {
+            background-color: #007BFF; /* 蓝色背景 */
+            border-color: #007BFF; /* 蓝色边框 */
+            border-radius: 8px; /* 增加圆角 */
+            transition: background-color 0.3s ease, border-color 0.3s ease;
+             height: calc(1.5em + .75rem + 2px); /* 匹配输入框高度 */
+             width: 100%; /* 按钮宽度占满父容器 */
+        }
+
+        .visualizer-box .input-group .btn-primary:hover {
+            background-color: #0056b3; /* 悬停颜色变深 */
+            border-color: #004085; /* 悬停边框颜色变深 */
+        }
+
+        .custom-text-block {
+            background-color: #FFFFFF; /* 设置为白色背景 */
+            padding: 30px; /* 调整内边距 */
+            border-radius: 15px; /* 增加圆角 */
+            margin: 20px auto; /* 居中并添加上下边距 */
+            max-width: 600px; /* 设置最大宽度 */
+            text-align: center;
+            font-size: 16px;
+            color: #333;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* 添加阴影 */
+        }
+
+        .custom-text-block br { display: none; } /* 隐藏换行，使用块级元素 */
+
+        .custom-text-block div {
+            margin-bottom: 10px; /* 调整文本块内部间距 */
+        }
+
+        #chat-box {
+            margin-top: 20px; /* 调整上边距 */
+        }
+
+=======
+        }
+>>>>>>> Stage-user-control-function-branch
+    </style>
+    <script>
+        hljs.initHighlightingOnLoad();
+    </script>
+</head>
+
+<body>
+    <div class="d-flex justify-content-center">
+<<<<<<< HEAD
+
+=======
+        <img src="static/figures/title.png" alt="ChatDev Title" id="title-image" style="width: 100%; max-width: 300px;">
+>>>>>>> Stage-user-control-function-branch
+    </div>
+    <div class="visualizer-container">
+        <div class="visualizer-box">
+            <br>
+            <a href="static/chain_visualizer.html">
+                <button>ChatChain Visualizer</button>
+            </a>
+            <p class="visualizer-info">Explore all the phases  and settings in ChatChain.</p>
+        </div>
+        <div class="visualizer-box">
+            <br>
+            <a href="static/replay.html">
+                <button>Replay Visualizer</button>
+            </a>
+            <p class="visualizer-info">Replay the agents' dialog from other ChatDev-generated software.</p>
+        </div>
+        <!-- 新增的 Prompt 输入区域 -->
+        <div class="visualizer-box">
+            <br>
+            <div class="input-group mb-3">
+<<<<<<< HEAD
+                <input type="text" class="form-control" id="user-name" placeholder="Enter project name...">
+                <input type="text" class="form-control" id="user-prompt" placeholder="Enter your prompt here...">
+                <input type="text" class="form-control" id="user-model" placeholder="Enter GPT model (e.g. GPT_4)">
+                <input type="text" class="form-control" id="user-path" placeholder="Enter file directory (optional)">
+                <input type="text" class="form-control" id="user-config" placeholder="Enter config file path (optional)">
+                <input type="text" class="form-control" id="user-org" placeholder="Enter organization name (optional)">
+=======
+                <input type="text" class="form-control" id="user-prompt" placeholder="Enter your prompt here...">
+>>>>>>> Stage-user-control-function-branch
+                <div class="input-group-append">
+                    <button type="button" class="btn btn-primary" id="run-button">Run ChatDev</button>
+                </div>
+            </div>
+            <p class="visualizer-info">Enter your project requirements and click the button to start.</p>
+        </div>
+    </div>
+
+    <!-- Inserted text block -->
+    <div class="custom-text-block">
+        Log Visualizer <br> Visualize the log in real-time when generating software, in agent dialog-style. Execute "python3 run.py" to start.
+    </div>
+
+    <div class="container d-flex flex-column" id="chat-box"></div>
+    <script src="static/js/main.js"></script>
+</body>
+
+</html>

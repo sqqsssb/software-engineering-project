@@ -1,0 +1,7 @@
+# No external dependencies are required for the current implementation
+# tkinter is included with Python's standard library
+# sqlite3 is also included with Python's standard library
+
+# If you plan to use any additional libraries in the future, you can add them here:
+# requests==2.25.1  # For making HTTP requests if needed
+# flask==1.1.2      # If you decide to implement a web server

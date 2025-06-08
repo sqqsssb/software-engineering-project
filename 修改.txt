@@ -1,0 +1,12 @@
+# 设置代理地址和端口
+# proxy_url = "http://127.0.0.1:7890"
+
+# 创建一个 httpx 客户端，并设置代理 (注意这里 http: 和 https: 后面一定要有两个 “//”)
+# httpx_client = httpx.Client(proxies={"http://": proxy_url, "https://": proxy_url})
+
+set BASE_URL='https://api.openai-proxy.live/v1'
+set OPENAI_API_KEY='sk-k1YBV1y0x43Be85HGiWy5xuUhwSRZYJtjvUGJP3Xu1SEpeik'
+python run.py --task "[say hi]" --name "[hello]"
+
+
+python run.py --task "[Develop an online shopping system, which should have both a front-end and a back-end. Use the Vue framework for the front-end. ]" --name "[online shopping system]"
