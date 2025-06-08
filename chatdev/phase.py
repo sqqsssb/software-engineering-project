@@ -17,6 +17,7 @@ from ecl import memory
 from ecl.db_config import create_connection, close_connection
 from ecl.memory import MemoryBase
 from chatdev.phase_state import set_current_phase
+from visualizer.api import generate_document
 
 
 class Phase(ABC):
@@ -369,6 +370,56 @@ Here are the conversations:
         #  在 chatting 函数结束后，返回阶段结论，前端显示后，用户通过 API 发送下一步操作（继续或重新执行,重新执行可以添加prompt）。
         #  后端需要保存当前阶段的状态，比如任务提示、角色设置等，以便重新执行时使用。
         #  可能需要在会话中存储当前阶段的信息，或者在数据库中记录阶段状态。
+        # 获取阶段结论
+        print(f"\n阶段 {self.phase_name} 的结论：")
+        print("-" * 50)
+        print(self.seminar_conclusion)
+        print("-" * 50)
+
+        # 用户交互
+        while True:
+            user_input = input("\n请选择操作：\n1. 继续下一个阶段\n2. 修改当前阶段\n3. 查看文档\n请输入选项（1/2/3）：")
+            if user_input == "1":
+                break
+            elif user_input == "2":
+                modification = input("请输入修改建议：")
+                # 更新阶段环境
+                self.phase_env["modification_prompt"] = modification
+                # 重新执行阶段
+                self.seminar_conclusion = \
+                    self.chatting(chat_env=chat_env,
+                                  task_prompt=chat_env.env_dict['task_prompt'],
+                                  need_reflect=need_reflect,
+                                  assistant_role_name=self.assistant_role_name,
+                                  user_role_name=self.user_role_name,
+                                  phase_prompt=self.phase_prompt,
+                                  phase_name=self.phase_name,
+                                  assistant_role_prompt=self.assistant_role_prompt,
+                                  user_role_prompt=self.user_role_prompt,
+                                  chat_turn_limit=chat_turn_limit,
+                                  placeholders=self.phase_env,
+                                  memory=chat_env.memory,
+                                  model_type=self.model_type)
+                # 显示新的结论
+                print(f"\n修改后的结论：")
+                print("-" * 50)
+                print(self.seminar_conclusion)
+                print("-" * 50)
+            elif user_input == "3":
+                # 生成文档
+                phase_data = {
+                    'phase_name': self.phase_name,
+                    'task_prompt': self.chat_env.env_dict['task_prompt'],
+                    'phase_conclusion': self.seminar_conclusion,
+                    'role_settings': json.dumps(self.phase_env)
+                }
+                document = generate_document(phase_data)
+                doc_path = os.path.join(self.chat_env.env_dict['directory'], f"{self.phase_name}_documentation.md")
+                with open(doc_path, "w", encoding="utf-8") as f:
+                    f.write(document)
+                print(f"\n文档已生成：{doc_path}")
+            else:
+                print("无效的选项，请重新输入")
 
         chat_env = self.update_chat_env(chat_env)
 

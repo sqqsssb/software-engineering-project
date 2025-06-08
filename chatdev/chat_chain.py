@@ -146,47 +146,6 @@ class ChatChain:
                 self.chat_env = self.phases[phase].execute(self.chat_env,
                                                            self.chat_turn_limit_default if max_turn_step <= 0 else max_turn_step,
                                                            need_reflect)
-                
-                # 获取阶段结论
-                phase_conclusion = self.phases[phase].seminar_conclusion
-                print(f"\n阶段 {phase} 的结论：")
-                print("-" * 50)
-                print(phase_conclusion)
-                print("-" * 50)
-                
-                # 用户交互
-                while True:
-                    user_input = input("\n请选择操作：\n1. 继续下一个阶段\n2. 修改当前阶段\n3. 查看文档\n请输入选项（1/2/3）：")
-                    if user_input == "1":
-                        break
-                    elif user_input == "2":
-                        modification = input("请输入修改建议：")
-                        # 更新阶段环境
-                        self.phases[phase].phase_env["modification_prompt"] = modification
-                        # 重新执行阶段
-                        self.chat_env = self.phases[phase].execute(self.chat_env,
-                                                                   self.chat_turn_limit_default if max_turn_step <= 0 else max_turn_step,
-                                                                   need_reflect)
-                        # 显示新的结论
-                        print(f"\n修改后的结论：")
-                        print("-" * 50)
-                        print(self.phases[phase].seminar_conclusion)
-                        print("-" * 50)
-                    elif user_input == "3":
-                        # 生成文档
-                        phase_data = {
-                            'phase_name': phase,
-                            'task_prompt': self.chat_env.env_dict['task_prompt'],
-                            'phase_conclusion': phase_conclusion,
-                            'role_settings': json.dumps(self.phases[phase].phase_env)
-                        }
-                        document = generate_document(phase_data)
-                        doc_path = os.path.join(self.chat_env.env_dict['directory'], f"{phase}_documentation.md")
-                        with open(doc_path, "w", encoding="utf-8") as f:
-                            f.write(document)
-                        print(f"\n文档已生成：{doc_path}")
-                    else:
-                        print("无效的选项，请重新输入")
             else:
                 raise RuntimeError(f"Phase '{phase}' is not yet implemented in chatdev.phase")
         # For ComposedPhase, we create instance here then conduct the "ComposedPhase.execute" method
