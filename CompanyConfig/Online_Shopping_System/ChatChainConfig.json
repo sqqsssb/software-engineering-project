@@ -6,7 +6,7 @@
             "need_reflect": "True"
         },
         {
-            "phase": "LanguageChoose",
+            "phase": "ArchitectureDesign",
             "phaseType": "SimplePhase",
             "max_turn_step": 1,
             "need_reflect": "True"
@@ -18,60 +18,13 @@
             "need_reflect": "False"
         },
         {
-            "phase": "CodeCompleteAll",
-            "phaseType": "ComposedPhase",
-            "cycleNum": 10,
-            "Composition": [{
-                "phase": "CodeComplete",
-                "phaseType": "SimplePhase",
-                "max_turn_step": 1,
-                "need_reflect": "False"
-            }]
-        },
-        {
-            "phase": "CodeReview",
-            "phaseType": "ComposedPhase",
-            "cycleNum": 3,
-            "Composition": [{
-                    "phase": "CodeReviewComment",
-                    "phaseType": "SimplePhase",
-                    "max_turn_step": 1,
-                    "need_reflect": "False"
-                },
-                {
-                    "phase": "CodeReviewModification",
-                    "phaseType": "SimplePhase",
-                    "max_turn_step": 1,
-                    "need_reflect": "False"
-                }
-            ]
-        },
-        {
-            "phase": "Test",
-            "phaseType": "ComposedPhase",
-            "cycleNum": 3,
-            "Composition": [{
-                    "phase": "TestErrorSummary",
-                    "phaseType": "SimplePhase",
-                    "max_turn_step": 1,
-                    "need_reflect": "False"
-                },
-                {
-                    "phase": "TestModification",
-                    "phaseType": "SimplePhase",
-                    "max_turn_step": 1,
-                    "need_reflect": "False"
-                }
-            ]
+            "phase": "TestErrorSummary",
+            "phaseType": "SimplePhase",
+            "max_turn_step": 1,
+            "need_reflect": "False"
         },
         {
             "phase": "EnvironmentDoc",
-            "phaseType": "SimplePhase",
-            "max_turn_step": 1,
-            "need_reflect": "True"
-        },
-        {
-            "phase": "Manual",
             "phaseType": "SimplePhase",
             "max_turn_step": 1,
             "need_reflect": "False"
@@ -79,21 +32,19 @@
     ],
     "recruitments": [
         "Chief Executive Officer",
-        "Counselor",
-        "Chief Human Resource Officer",
         "Chief Product Officer",
         "Chief Technology Officer",
+        "Chief Architect",
         "Programmer",
-        "Code Reviewer",
         "Software Test Engineer",
-        "Chief Creative Officer"
+        "DevOps Engineer"
     ],
     "clear_structure": "True",
-    "gui_design": "True",
-    "git_management": "False",
+    "gui_design": "False",
+    "git_management": "True",
     "web_spider": "False",
     "self_improve": "False",
     "incremental_develop": "False",
     "with_memory": "False",
-    "background_prompt": "ChatDev is a software company powered by multiple intelligent agents, such as chief executive officer, chief human resources officer, chief product officer, chief technology officer, etc, with a multi-agent organizational structure and the mission of 'changing the digital world through programming'."
+    "background_prompt": "ChatDev是一个由多个智能代理组成的软件公司，包括首席执行官、产品总监、技术总监、架构师、程序员、测试工程师和DevOps工程师等，采用多代理组织结构，使命是'通过编程改变数字世界'。"
 }

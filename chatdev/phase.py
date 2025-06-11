@@ -239,66 +239,59 @@ class Phase(ABC):
                         role_play_session: RolePlaying,
                         phase_name: str,
                         chat_env: ChatEnv) -> str:
-        """
+        """Self reflection of the phase."""
+        if not chat_env.exist_employee("Chief Product Officer"):
+            raise ValueError("Chief Product Officer not recruited in ChatEnv.")
+        if not chat_env.exist_employee("Chief Executive Officer"):
+            raise ValueError("Chief Executive Officer not recruited in ChatEnv.")
 
-        Args:
-            task_prompt: user query prompt for building the software
-            role_play_session: role play session from the chat phase which needs reflection
-            phase_name: name of the chat phase which needs reflection
-            chat_env: global chatchain environment
+        # init role play
+        role_play_session = RolePlaying(
+            assistant_role_name="Chief Product Officer",
+            user_role_name="Chief Executive Officer",
+            assistant_role_prompt="作为产品总监，你需要对当前阶段的工作进行总结和反思。",
+            user_role_prompt="作为首席执行官，你需要确保产品总监的总结和反思是全面和准确的。",
+            task_prompt=task_prompt,
+            task_type=TaskType.CHATDEV,
+            with_task_specify=False,
+            model_type=self.model_type,
+            background_prompt=chat_env.config.background_prompt,
+            phase_name=phase_name,
+        )
+        log_visualize("System", role_play_session.assistant_sys_msg)
+        log_visualize("System", role_play_session.user_sys_msg)
 
-        Returns:
-            reflected_content: str, reflected results
+        # start the chat
+        _, input_user_msg = role_play_session.init_chat(None, None, "请对当前阶段的工作进行总结和反思。")
+        seminar_conclusion = None
 
-        """
-        messages = role_play_session.assistant_agent.stored_messages if len(
-            role_play_session.assistant_agent.stored_messages) >= len(
-            role_play_session.user_agent.stored_messages) else role_play_session.user_agent.stored_messages
-        messages = ["{}: {}".format(message.role_name, message.content.replace("\n\n", "\n")) for message in messages]
-        messages = "\n\n".join(messages)
+        # handle chats
+        for i in range(1):
+            assistant_response, user_response = role_play_session.step(input_user_msg, True)
 
-        if "recruiting" in phase_name:
-            question = """Answer their final discussed conclusion (Yes or No) in the discussion without any other words, e.g., "Yes" """
-        elif phase_name == "DemandAnalysis":
-            question = """Answer their final product modality in the discussion without any other words, e.g., "PowerPoint" """
-        elif phase_name == "LanguageChoose":
-            question = """Conclude the programming language being discussed for software development, in the format: "*" where '*' represents a programming language." """
-        elif phase_name == "EnvironmentDoc":
-            question = """According to the codes and file format listed above, write a requirements.txt file to specify the dependencies or packages required for the project to run properly." """
-        else:
-            raise ValueError(f"Reflection of phase {phase_name}: Not Assigned.")
+            conversation_meta = "**" + "Chief Product Officer" + "<->" + "Chief Executive Officer" + " on : " + str(
+                phase_name) + ", turn " + str(i) + "**\n\n"
 
-        # 确保 reflection_prompt 不为 None
-        if self.reflection_prompt is None:
-            self.reflection_prompt = """You are a counselor. You need to help the CEO to make a decision based on the following conversations between the CEO and other roles.
-Here are the conversations:
-{conversations}
+            if isinstance(assistant_response.msg, ChatMessage):
+                log_visualize(role_play_session.assistant_agent.role_name,
+                              conversation_meta + "[" + role_play_session.user_agent.system_message.content + "]\n\n" + assistant_response.msg.content)
+                if role_play_session.assistant_agent.info:
+                    seminar_conclusion = assistant_response.msg.content
+                    break
+                if assistant_response.terminated:
+                    break
 
-{question}"""
+            if isinstance(user_response.msg, ChatMessage):
+                log_visualize(role_play_session.user_agent.role_name,
+                              conversation_meta + "[" + role_play_session.assistant_agent.system_message.content + "]\n\n" + user_response.msg.content)
+                if role_play_session.user_agent.info:
+                    seminar_conclusion = user_response.msg.content
+                    break
 
-        # Reflections actually is a special phase between CEO and counselor
-        # They read the whole chatting history of this phase and give refined conclusion of this phase
-        reflected_content = \
-            self.chatting(chat_env=chat_env,
-                          task_prompt=task_prompt,
-                          assistant_role_name="Chief Executive Officer",
-                          user_role_name="Counselor",
-                          phase_prompt=self.reflection_prompt,
-                          phase_name="Reflection",
-                          assistant_role_prompt=self.ceo_prompt,
-                          user_role_prompt=self.counselor_prompt,
-                          placeholders={"conversations": messages, "question": question},
-                          need_reflect=False,
-                          memory=chat_env.memory,
-                          chat_turn_limit=1,
-                          model_type=self.model_type)
+        if seminar_conclusion is None:
+            seminar_conclusion = "需求分析完成"
 
-        if "recruiting" in phase_name:
-            if "Yes".lower() in reflected_content.lower():
-                return "Yes"
-            return "No"
-        else:
-            return reflected_content
+        return seminar_conclusion
 
     @abstractmethod
     def update_phase_env(self, chat_env):
@@ -348,24 +341,24 @@ Here are the conversations:
 
         Returns:
             chat_env: updated global chat chain environment using the conclusion from this phase execution
-
         """
+        self.chat_env = chat_env  # 添加这一行来保存chat_env引用
         self.update_phase_env(chat_env)
         print(f"chatting初始化时的phase_name：{self.phase_name}")
         self.seminar_conclusion = \
             self.chatting(chat_env=chat_env,
-                          task_prompt=chat_env.env_dict['task_prompt'],
-                          need_reflect=need_reflect,
-                          assistant_role_name=self.assistant_role_name,
-                          user_role_name=self.user_role_name,
-                          phase_prompt=self.phase_prompt,
-                          phase_name=self.phase_name,
-                          assistant_role_prompt=self.assistant_role_prompt,
-                          user_role_prompt=self.user_role_prompt,
-                          chat_turn_limit=chat_turn_limit,
-                          placeholders=self.phase_env,
-                          memory=chat_env.memory,
-                          model_type=self.model_type)
+                         task_prompt=chat_env.env_dict['task_prompt'],
+                         need_reflect=need_reflect,
+                         assistant_role_name=self.assistant_role_name,
+                         user_role_name=self.user_role_name,
+                         phase_prompt=self.phase_prompt,
+                         phase_name=self.phase_name,
+                         assistant_role_prompt=self.assistant_role_prompt,
+                         user_role_prompt=self.user_role_prompt,
+                         chat_turn_limit=chat_turn_limit,
+                         placeholders=self.phase_env,
+                         memory=chat_env.memory,
+                         model_type=self.model_type)
         # TODO 阶段用户控制功能：
         #  在 chatting 函数结束后，返回阶段结论，前端显示后，用户通过 API 发送下一步操作（继续或重新执行,重新执行可以添加prompt）。
         #  后端需要保存当前阶段的状态，比如任务提示、角色设置等，以便重新执行时使用。
@@ -388,18 +381,18 @@ Here are the conversations:
                 # 重新执行阶段
                 self.seminar_conclusion = \
                     self.chatting(chat_env=chat_env,
-                                  task_prompt=chat_env.env_dict['task_prompt'],
-                                  need_reflect=need_reflect,
-                                  assistant_role_name=self.assistant_role_name,
-                                  user_role_name=self.user_role_name,
-                                  phase_prompt=self.phase_prompt,
-                                  phase_name=self.phase_name,
-                                  assistant_role_prompt=self.assistant_role_prompt,
-                                  user_role_prompt=self.user_role_prompt,
-                                  chat_turn_limit=chat_turn_limit,
-                                  placeholders=self.phase_env,
-                                  memory=chat_env.memory,
-                                  model_type=self.model_type)
+                                 task_prompt=chat_env.env_dict['task_prompt'],
+                                 need_reflect=need_reflect,
+                                 assistant_role_name=self.assistant_role_name,
+                                 user_role_name=self.user_role_name,
+                                 phase_prompt=self.phase_prompt,
+                                 phase_name=self.phase_name,
+                                 assistant_role_prompt=self.assistant_role_prompt,
+                                 user_role_prompt=self.user_role_prompt,
+                                 chat_turn_limit=chat_turn_limit,
+                                 placeholders=self.phase_env,
+                                 memory=chat_env.memory,
+                                 model_type=self.model_type)
                 # 显示新的结论
                 print(f"\n修改后的结论：")
                 print("-" * 50)
@@ -409,12 +402,12 @@ Here are the conversations:
                 # 生成文档
                 phase_data = {
                     'phase_name': self.phase_name,
-                    'task_prompt': self.chat_env.env_dict['task_prompt'],
+                    'task_prompt': chat_env.env_dict['task_prompt'],
                     'phase_conclusion': self.seminar_conclusion,
                     'role_settings': json.dumps(self.phase_env)
                 }
                 document = generate_document(phase_data)
-                doc_path = os.path.join(self.chat_env.env_dict['directory'], f"{self.phase_name}_documentation.md")
+                doc_path = os.path.join(chat_env.env_dict['directory'], f"{self.phase_name}_documentation.md")
                 with open(doc_path, "w", encoding="utf-8") as f:
                     f.write(document)
                 print(f"\n文档已生成：{doc_path}")
@@ -536,23 +529,27 @@ class DemandAnalysis(Phase):
         return chat_env
 
 
-class LanguageChoose(Phase):
+class ArchitectureDesign(Phase):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
     def update_phase_env(self, chat_env):
-        self.phase_env.update({"task": chat_env.env_dict['task_prompt'],
-                               "description": chat_env.env_dict['task_description'],
-                               "modality": chat_env.env_dict['modality'],
-                               "ideas": chat_env.env_dict['ideas']})
+        self.phase_env.update({
+            "architecture": None,
+            "language": None,
+            "framework": None,
+            "database": None
+        })
 
     def update_chat_env(self, chat_env) -> ChatEnv:
-        if len(self.seminar_conclusion) > 0 and "<INFO>" in self.seminar_conclusion:
-            chat_env.env_dict['language'] = self.seminar_conclusion.split("<INFO>")[-1].lower().replace(".", "").strip()
-        elif len(self.seminar_conclusion) > 0:
-            chat_env.env_dict['language'] = self.seminar_conclusion
-        else:
-            chat_env.env_dict['language'] = "Python"
+        if "architecture" in self.phase_env:
+            chat_env.architecture = self.phase_env["architecture"]
+        if "language" in self.phase_env:
+            chat_env.language = self.phase_env["language"]
+        if "framework" in self.phase_env:
+            chat_env.framework = self.phase_env["framework"]
+        if "database" in self.phase_env:
+            chat_env.database = self.phase_env["database"]
         return chat_env
 
 
